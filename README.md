@@ -1,4 +1,8 @@
 ARCA
 ====
+ARCA OB
+Repositorio Privado de Tegik
 
-Repositorio ARCA OB
+Participantes:
+	Mario Lopez
+	Carlos Salinas
