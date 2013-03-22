@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+  <database name="VIEW ALMAC_SOLOALMACENADAS_V">
+    <view name="ALMAC_SOLOALMACENADAS_V"><![CDATA[SELECT sd.m_storage_detail_id AS almac_soloalmacenadas_v_id, asi.ad_client_id, asi.ad_org_id, asi.createdby, asi.updatedby, asi.created, asi.updated, asi.isactive, asi.em_almac_prefijo AS prefijo, asi.em_almac_numero AS numero, asi.em_ventas_pickexecute_id AS ventas_pickexecute_id, sd.qtyonhand AS cantidad, p.m_product_id, wh.m_warehouse_id, asi.m_attributesetinstance_id, 'N' AS ob_selected, asi.em_almac_reservapedido AS reserva_pedido, asi.em_almac_reservacotizacion AS reserva_cotizacion FROM m_attributesetinstance asi JOIN m_storage_detail sd ON sd.m_attributesetinstance_id = asi.m_attributesetinstance_id AND round(sd.qtyonhand, 4) > 0 JOIN m_product p ON p.m_product_id = sd.m_product_id JOIN m_locator l ON l.m_locator_id = sd.m_locator_id JOIN m_warehouse wh ON wh.m_warehouse_id = l.m_warehouse_id]]></view>
+  </database>

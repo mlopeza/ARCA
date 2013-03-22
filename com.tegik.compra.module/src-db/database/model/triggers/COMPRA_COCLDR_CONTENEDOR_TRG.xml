@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER COMPRA_COCLDR_CONTENEDOR_TRG">
+    <trigger name="COMPRA_COCLDR_CONTENEDOR_TRG" table="COMPRA_CONTENEDOR" fires="before" insert="false" update="true" delete="true" foreach="row">
+      <body><![CDATA[BEGIN
+    
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+
+	IF (DELETING) THEN
+		IF (TRIM(UPPER(:OLD.estado)) = 'CO' AND DELETING) THEN
+			RAISE_APPLICATION_ERROR(-20000, 'No se puede borrar el contenedor, este ya ha sido completado.') ;
+		END IF;
+
+		IF (TRIM(UPPER(:OLD.estado)) = 'CL'  AND DELETING) THEN
+			RAISE_APPLICATION_ERROR(-20000, 'No se puede borrar el contenedor, este ya ha sido cerrado.') ;
+		END IF;
+
+	ELSE
+		IF (TRIM(UPPER(:OLD.estado)) = 'CO' AND NOT (TRIM(UPPER(:NEW.estado)) = 'DR' OR TRIM(UPPER(:NEW.estado)) = 'CL')) THEN
+			RAISE_APPLICATION_ERROR(-20000, 'No se puede modificar el contenedor, este ya ha sido completado.') ;
+		END IF;
+
+		IF (TRIM(UPPER(:OLD.estado)) = 'CL') THEN
+			RAISE_APPLICATION_ERROR(-20000, 'No se puede modificar el contenedor, este ya ha sido cerrado.') ;
+		END IF;
+	END IF;
+	
+
+    END COMPRA_COCLDR_CONTENEDOR_TRG
+]]></body>
+    </trigger>
+  </database>

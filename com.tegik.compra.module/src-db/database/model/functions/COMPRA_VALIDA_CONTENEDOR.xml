@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION COMPRA_VALIDA_CONTENEDOR">
+    <function name="COMPRA_VALIDA_CONTENEDOR" type="VARCHAR">
+      <parameter name="p_order_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[/*************************************************************************
+* The contents of this file are subject to the Openbravo  Public  License
+* Version  1.1  (the  "License"),  being   the  Mozilla   Public  License
+* Version 1.1  with a permitted attribution clause; you may not  use this
+* file except in compliance with the License. You  may  obtain  a copy of
+* the License at http://www.openbravo.com/legal/license.html
+* Software distributed under the License  is  distributed  on  an "AS IS"
+* basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+* License for the specific  language  governing  rights  and  limitations
+* under the License.
+* The Original Code is Openbravo ERP.
+* The Initial Developer of the Original Code is Openbravo SLU
+* All portions are Copyright (C) 2001-2006 Openbravo SLU
+* All Rights Reserved.
+* Contributor(s):  ______________________________________.
+************************************************************************/
+/*************************************************************************
+* Title:   Return the short name of the location
+* Description:
+*
+************************************************************************/
+  cur_orderline RECORD;
+  v_sumactd NUMBER;
+  v_contenedor VARCHAR(32);
+  v_desgcont_id VARCHAR(32);
+  v_dummy NUMBER;
+BEGIN  
+
+	SELECT COMPRA_CONTENEDOR_ID INTO v_contenedor FROM COMPRA_CONTENEDOR WHERE AD_CLIENT_ID = '0' ORDER BY CREATED DESC LIMIT 1;
+
+	IF (v_contenedor IS NULL) THEN
+		RETURN 'No existe un contenedor genérico, contacte a soporte';
+	END IF;
+
+	FOR cur_orderline IN
+	(SELECT * FROM C_ORDERLINE WHERE C_ORDER_ID = p_order_id)
+	LOOP
+		v_desgcont_id = NULL;
+		SELECT SUM(CANTIDAD) INTO v_sumactd FROM COMPRA_DESGCONT WHERE C_ORDERLINE_ID = cur_orderline.C_ORDERLINE_ID;
+		IF (COALESCE(v_sumactd,0) > cur_orderline.QTYORDERED) THEN
+			RETURN 'La cantidad en los contenedores es mayor a la cantidad en la orden';
+		ELSE 
+			IF (COALESCE(v_sumactd,0) < cur_orderline.QTYORDERED) THEN
+		
+				SELECT COMPRA_DESGCONT_ID INTO v_desgcont_id FROM COMPRA_DESGCONT WHERE COMPRA_CONTENEDOR_ID = v_contenedor AND C_ORDERLINE_ID = cur_orderline.C_ORDERLINE_ID;
+				IF (v_desgcont_id IS NULL) THEN
+					INSERT INTO compra_desgcont
+					(compra_desgcont_id, ad_client_id, ad_org_id, isactive, 
+					createdby, updatedby, compra_contenedor_id, c_orderline_id, 
+					cantidad)
+					VALUES 
+					(GET_UUID(), cur_orderline.AD_CLIENT_ID, cur_orderline.AD_ORG_ID, cur_orderline.ISACTIVE,
+					cur_orderline.CREATEDBY, cur_orderline.CREATEDBY, v_contenedor, cur_orderline.C_ORDERLINE_ID, 
+					cur_orderline.QTYORDERED - COALESCE(v_sumactd,0));
+	
+				ELSE
+					UPDATE COMPRA_DESGCONT SET CANTIDAD = CANTIDAD + cur_orderline.QTYORDERED - COALESCE(v_sumactd,0) WHERE COMPRA_DESGCONT_ID = v_desgcont_id;
+				END IF;
+			END IF;
+		END IF;	
+	END LOOP;
+	RETURN 'OK';
+END COMPRA_VALIDA_CONTENEDOR
+]]></body>
+    </function>
+  </database>

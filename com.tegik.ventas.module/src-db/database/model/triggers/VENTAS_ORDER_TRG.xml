@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_ORDER_TRG">
+    <trigger name="VENTAS_ORDER_TRG" table="C_ORDER" fires="before" insert="true" update="false" delete="false" foreach="row">
+      <body><![CDATA[BEGIN
+    
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+
+    SELECT COALESCE(EM_VENTAS_PERMITIRSALIDA,'N') INTO :NEW.EM_VENTAS_PERMITIRSALIDA FROM C_BPARTNER WHERE C_BPARTNER_ID = :NEW.C_BPARTNER_ID;
+    :NEW.EM_VENTAS_BP_ID = :NEW.C_BPARTNER_ID;
+
+END VENTAS_ORDER_TRG
+]]></body>
+    </trigger>
+  </database>

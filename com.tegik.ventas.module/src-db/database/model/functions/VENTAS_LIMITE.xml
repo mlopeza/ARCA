@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION VENTAS_LIMITE">
+    <function name="VENTAS_LIMITE" type="NUMERIC">
+      <parameter name="p_order_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[/*************************************************************************
+* The contents of this file are subject to the Compiere Public
+* License 1.1 ("License"); You may not use this file except in
+* compliance with the License. You may obtain a copy of the License in
+* the legal folder of your Openbravo installation.
+* Software distributed under the License is distributed on an
+* "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+* implied. See the License for the specific language governing rights
+* and limitations under the License.
+* The Original Code is  Compiere  ERP &  Business Solution
+* The Initial Developer of the Original Code is Jorg Janke and ComPiere, Inc.
+* Portions created by Jorg Janke are Copyright (C) 1999-2001 Jorg Janke,
+* parts created by ComPiere are Copyright (C) ComPiere, Inc.;
+* All Rights Reserved.
+* Contributor(s): Openbravo SLU
+* Contributions are Copyright (C) 2001-2010 Openbravo, S.L.U.
+*
+* Specifically, this derivative work is based upon the following Compiere
+* file and version.
+*************************************************************************
+* $Id: C_Currency_Convert.sql,v 1.8 2003/03/17 20:32:24 jjanke Exp $
+***
+* Title: Convert Amount (using IDs)
+* Description:
+*  from CurrencyFrom_ID to CurrencyTo_ID
+*  Returns NULL, if conversion not found
+*  Standard Rounding
+* Test:
+*  SELECT C_Currency_Convert(100,116,100,null,null) FROM DUAL => 64.72
+************************************************************************/
+  v_usado NUMBER;
+  v_disponible NUMBER;
+  v_solicitud NUMBER;
+  CUR_ORDER RECORD;
+BEGIN
+
+  SELECT * INTO CUR_ORDER FROM C_ORDER WHERE C_ORDER_ID = p_order_id;
+
+  SELECT C_CURRENCY_CONVERT_PRECISION(CUR_ORDER.GRANDTOTAL, CUR_ORDER.C_CURRENCY_ID, '130', now(), 'S', CUR_ORDER.AD_CLIENT_ID, CUR_ORDER.AD_ORG_ID, 'A') INTO v_solicitud;
+
+  SELECT SUM(C_CURRENCY_CONVERT_PRECISION(FPS.OUTSTANDINGAMT, FPS.C_CURRENCY_ID, '130', now(), 'S', I.AD_CLIENT_ID, I.AD_ORG_ID, 'A'))
+  INTO v_usado
+  FROM FIN_PAYMENT_SCHEDULE FPS
+  INNER JOIN C_INVOICE I ON FPS.C_INVOICE_ID = I.C_INVOICE_ID AND I.DOCSTATUS = 'CO'
+  INNER JOIN C_DOCTYPE DT ON I.C_DOCTYPE_ID = DT.C_DOCTYPE_ID AND DT.DOCBASETYPE IN ('ARI')
+  WHERE FPS.OUTSTANDINGAMT > 0 AND I.C_BPARTNER_ID = CUR_ORDER.C_BPARTNER_ID;
+
+  SELECT SO_CREDITLIMIT INTO v_disponible FROM C_BPARTNER WHERE C_BPARTNER_ID = CUR_ORDER.C_BPARTNER_ID;
+
+  RETURN ROUND(COALESCE(v_usado,0) + COALESCE (v_solicitud, 0) - COALESCE(v_disponible,0),2);
+
+  
+EXCEPTION
+WHEN OTHERS THEN
+  DBMS_OUTPUT.PUT_LINE(SQLERRM) ;
+  RAISE;
+END VENTAS_LIMITE
+]]></body>
+    </function>
+  </database>

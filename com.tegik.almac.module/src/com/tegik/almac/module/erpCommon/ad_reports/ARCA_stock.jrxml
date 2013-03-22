@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="agentes" pageWidth="612" pageHeight="792" whenNoDataType="NoDataSection" columnWidth="572" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.3310000000000053"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50" isBold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18" isBold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14" isBold="true" pdfFontName="Times-Roman"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#ACC5D7"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="BASE_WEB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/web"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/modules/com.tegik.vtadist.module/src/com/tegik/vtadist/module/erpCommon/ad_reports"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="USER_CLIENT" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="prod_id" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_prod_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{prod_id}.equals("") ? " ": " AND p.m_product_id = '" + $P{prod_id} + "'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="formato" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_formato" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{formato}.equals("") ? " ": " AND p.em_dmprod_tileoslab = '" + $P{formato} + "'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="tipopiedra" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_tipopiedra" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{tipopiedra}.equals("") ? " ": " AND p.em_dmprod_tipopiedra_id = '" + $P{tipopiedra} + "' "]]></defaultValueExpression>
+	</parameter>
+	<parameter name="BASE_DESIGN" class="java.lang.String">
+		<defaultValueExpression><![CDATA["CROCANTE"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="acabado" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_acabado" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{acabado}.equals("") ? " ": " AND p.em_dmprod_acabado = '" + $P{acabado} + "' "]]></defaultValueExpression>
+	</parameter>
+	<parameter name="color" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_color" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{color}.equals("") ? " ": " AND p.em_dmprod_color_id = '" + $P{color} + "' "]]></defaultValueExpression>
+	</parameter>
+	<parameter name="pais" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_pais" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{pais}.equals("") ? " ": " AND p.em_dmprod_country_id = '" + $P{pais} + "' "]]></defaultValueExpression>
+	</parameter>
+	<parameter name="uso" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_uso" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{uso}.equals("") ? " ": " AND p.em_dmprod_uso_id = '" + $P{uso} + "' "]]></defaultValueExpression>
+	</parameter>
+	<parameter name="areauso" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_areauso" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{areauso}.equals("") ? " ": " AND p.em_dmprod_areauso_id = '" + $P{areauso} + "' "]]></defaultValueExpression>
+	</parameter>
+	<parameter name="outlet" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_outlet" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{outlet}.equals("") ? " ": " AND p.em_dmprod_isoutlet = '" + $P{outlet} + "' "]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT p.m_product_id as p_id, 'Stock real: ' || p.value as etiqueta1, 'Status de compras: ' || p.value as etiqueta2
+  FROM m_product p
+WHERE p.ad_client_id IN ($P!{USER_CLIENT})
+AND p.issold = 'Y'
+AND p.isstocked = 'Y'
+AND p.ispurchased = 'Y'
+AND p.producttype = 'I'
+$P!{aux_prod_id}
+$P!{aux_formato}
+$P!{aux_tipopiedra}
+$P!{aux_acabado}
+$P!{aux_color}
+$P!{aux_pais}
+$P!{aux_uso}
+$P!{aux_areauso}
+$P!{aux_outlet}
+;]]>
+	</queryString>
+	<field name="p_id" class="java.lang.String"/>
+	<field name="etiqueta1" class="java.lang.String"/>
+	<field name="etiqueta2" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="49" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="0" width="396" height="27" forecolor="#00447B"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="23"/>
+				</textElement>
+				<text><![CDATA[Reporte de mercancía]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yy">
+				<reportElement x="0" y="27" width="144" height="15" forecolor="#063167"/>
+				<textElement textAlignment="Left">
+					<font fontName="SansSerif" size="12"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<detail>
+		<band height="6" splitType="Stretch">
+			<subreport>
+				<reportElement x="0" y="5" width="357" height="0" isPrintInFirstWholeBand="true"/>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="USER_CLIENT">
+					<subreportParameterExpression><![CDATA[$P{USER_CLIENT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BASE_WEB">
+					<subreportParameterExpression><![CDATA[$P{BASE_WEB}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="p_id">
+					<subreportParameterExpression><![CDATA[$F{p_id}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{BASE_DESIGN} + "/com/tegik/almac/module/erpCommon/ad_reports/ARCA_stock_subreport.jasper"]]></subreportExpression>
+			</subreport>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="572" height="5" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+		</band>
+		<band height="1">
+			<subreport>
+				<reportElement x="0" y="0" width="567" height="0" isPrintInFirstWholeBand="true"/>
+				<subreportParameter name="USER_CLIENT">
+					<subreportParameterExpression><![CDATA[$P{USER_CLIENT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BASE_WEB">
+					<subreportParameterExpression><![CDATA[$P{BASE_WEB}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="p_id">
+					<subreportParameterExpression><![CDATA[$F{p_id}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA[$P{BASE_DESIGN} + "/com/tegik/almac/module/erpCommon/ad_reports/ARCA_stock_subreport2.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="16">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="572" height="5" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="37" splitType="Stretch">
+			<elementGroup/>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="170" height="37" forecolor="#00447B" backcolor="#00447B"/>
+				<textField evaluationTime="Report">
+					<reportElement style="Column header" x="74" y="7" width="62" height="20" forecolor="#FFFFFF"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="SansSerif" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<elementGroup/>
+				<textField>
+					<reportElement style="Column header" x="0" y="7" width="74" height="20" forecolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Monospaced" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Pagina "+$V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+	<noData>
+		<band height="50">
+			<staticText>
+				<reportElement x="0" y="12" width="396" height="27" forecolor="#00447B"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="23"/>
+				</textElement>
+				<text><![CDATA[No se encontraron resultados]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

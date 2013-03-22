@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE M_FREIGHT">
+    <table name="M_FREIGHT" primaryKey="M_FREIGHT_KEY">
+      <column name="EM_ALMAC_DESCRIPTION" primaryKey="false" required="true" type="VARCHAR" size="255" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_C_CITY_ID" primaryKey="false" required="true" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_TO_C_CITY_ID" primaryKey="false" required="true" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <foreign-key foreignTable="C_CITY" name="EM_ALMAC_C_CITY_FK">
+        <reference local="EM_ALMAC_C_CITY_ID" foreign="C_CITY_ID"/>
+      </foreign-key>
+      <foreign-key foreignTable="C_CITY" name="EM_ALMAC_TO_C_CITY_FK">
+        <reference local="EM_ALMAC_TO_C_CITY_ID" foreign="C_CITY_ID"/>
+      </foreign-key>
+    </table>
+  </database>

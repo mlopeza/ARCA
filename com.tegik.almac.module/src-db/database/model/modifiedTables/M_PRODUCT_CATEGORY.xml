@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE M_PRODUCT_CATEGORY">
+    <table name="M_PRODUCT_CATEGORY" primaryKey="M_PRODUCT_CATEGORY_KEY">
+      <column name="EM_ALMAC_MARGEN_MINIMO" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_MARGEN_IDEAL" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_COMISION" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+    </table>
+  </database>

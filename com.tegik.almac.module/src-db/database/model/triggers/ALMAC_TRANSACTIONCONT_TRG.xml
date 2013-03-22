@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_TRANSACTIONCONT_TRG">
+    <trigger name="ALMAC_TRANSACTIONCONT_TRG" table="M_TRANSACTION" fires="after" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[/*************************************************************************
+***Tegik
+************************************************************************/
+
+v_mensaje VARCHAR(3000);
+v_tileoslab VARCHAR(10);
+v_reservadas NUMBER;
+v_precio NUMBER;
+v_qtysd NUMBER;
+v_documentno VARCHAR (60);
+v_prodName VARCHAR (60);
+v_asiName VARCHAR (255);
+v_orderline_id VARCHAR(32);
+v_ligada NUMBER;
+v_enviadas NUMBER;
+v_descripcion VARCHAR(32);
+v_contenedorLinea VARCHAR(32);
+v_contenedorEncabezado VARCHAR(32);
+CUR_TRANSACTION RECORD;
+BEGIN
+     
+	IF AD_isTriggerEnabled()='N' THEN RETURN;
+	END IF;
+
+	SELECT EM_DMPROD_TILEOSLAB, NAME INTO v_tileoslab, v_prodName FROM M_PRODUCT WHERE M_PRODUCT_ID = :NEW.M_PRODUCT_ID;
+
+        SELECT DESCRIPTION INTO v_asiName FROM M_ATTRIBUTESETINSTANCE WHERE M_ATTRIBUTESETINSTANCE_ID = :NEW.M_ATTRIBUTESETINSTANCE_ID;
+
+
+	
+--AGREGADO MALCOLM 08/03/2012
+
+--C+ (Customer Returns)
+--C- (Customer Shipment) REMISION SALIDA
+--D+ (Internal Consumption +) NO SE
+--D- (Internal Consumption -) NO SE
+--I+ (Inventory In) 
+--I- (Inventory Out) REMISION SALIDA
+--M+ (Movement To) MOVIMIENTO
+--M- (Movement From)
+--P+ (Production +) NO SE
+--P- (Production -)
+--V+ (Vendor Receipts)
+--V- (Vendor Returns)
+--W+ (Work Order +)
+--W- (Work Order -)
+
+--IF 'a'='b' THEN
+IF v_tileoslab IS NOT NULL THEN
+
+	DBMS_OUTPUT.PUT_LINE( :NEW.M_TRANSACTION_ID);
+	
+	SELECT MOVEMENTQTY, M_INOUTLINE_ID INTO CUR_TRANSACTION FROM M_TRANSACTION WHERE M_ATTRIBUTESETINSTANCE_ID = :NEW.M_ATTRIBUTESETINSTANCE_ID AND MOVEMENTTYPE = 'V+' ORDER BY MOVEMENTDATE DESC, CREATED DESC LIMIT 1;
+	IF (CUR_TRANSACTION.MOVEMENTQTY > 0) THEN
+		-- Busca el Precio de la Transacción
+		SELECT em_almac_preciom2 into v_precio from m_inoutline where m_inoutline_id = CUR_TRANSACTION.m_inoutline_id;
+		SELECT EM_COMPRA_CONTENEDOR_ID INTO v_contenedorLinea FROM M_INOUTLINE WHERE M_INOUTLINE_ID = CUR_TRANSACTION.M_INOUTLINE_ID;
+		SELECT COALESCE(EM_COMPRA_CONTENEDORDF_ID, EM_COMPRA_CONTENEDOR_ID) INTO v_contenedorEncabezado FROM M_INOUT WHERE M_INOUT_ID IN (SELECT M_INOUT_ID FROM M_INOUTLINE WHERE M_INOUTLINE_ID = CUR_TRANSACTION.M_INOUTLINE_ID);
+		UPDATE M_ATTRIBUTESETINSTANCE SET 
+		EM_ALMAC_INGRESADO = 'Y', 
+		EM_ALMAC_COM_CONTENEDOR_ID = COALESCE(v_contenedorLinea, v_contenedorEncabezado),
+		EM_ALMAC_COSTO_REALUSD = v_precio
+		WHERE M_ATTRIBUTESETINSTANCE_ID = :NEW.M_ATTRIBUTESETINSTANCE_ID;
+	ELSE
+		UPDATE M_ATTRIBUTESETINSTANCE SET EM_ALMAC_INGRESADO = 'N', EM_ALMAC_COM_CONTENEDOR_ID = NULL WHERE M_ATTRIBUTESETINSTANCE_ID = :NEW.M_ATTRIBUTESETINSTANCE_ID;
+	END IF;
+
+END IF;
+	
+	
+END ALMAC_TRANSACTIONCONT_TRG
+]]></body>
+    </trigger>
+  </database>

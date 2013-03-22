@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_CALCULA_COSTO">
+    <function name="ALMAC_CALCULA_COSTO" type="NUMERIC">
+      <parameter name="p_product_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_org_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_warehouse_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_ruta" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_margen" type="CHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[v_margen NUMBER;
+v_maniobras NUMBER;
+v_honorarios NUMBER;
+v_flete_terrestre NUMBER;
+v_flete_mar NUMBER;
+v_product_depth NUMBER;
+v_costo_fob NUMBER;
+v_arancel NUMBER;
+v_C1 NUMBER:= 0;
+v_C2 NUMBER:= 0;
+v_C3 NUMBER:= 0;
+v_C4 NUMBER:= 0;
+v_C5 NUMBER:= 0;
+v_mty bpchar;
+v_df bpchar;
+v_gdl bpchar;
+v_cun bpchar;
+v_city VARCHAR2(32);
+BEGIN 
+
+	IF (p_ruta is not null) THEN
+		v_city = TRIM(UPPER(p_ruta));
+	ELSIF(p_org_id IS NOT NULL) THEN
+		SELECT UPPER(COALESCE(em_almac_esmty,'N'::bpchar)),
+			UPPER(COALESCE(em_almac_esdf,'N'::bpchar)),
+			UPPER(COALESCE(em_almac_escan,'N'::bpchar)),
+			UPPER(COALESCE(em_almac_esgdl,'N'::bpchar))
+			INTO v_mty,v_df,v_cun,v_gdl
+		FROM AD_ORG WHERE AD_ORG_ID = p_org_id
+		LIMIT 1;
+	ELSE
+		SELECT UPPER(COALESCE(em_almac_esmonterrey,'N'::bpchar)),
+			UPPER(COALESCE(em_almac_esdf,'N'::bpchar)),
+			UPPER(COALESCE(em_almac_escancun,'N'::bpchar)),
+			UPPER(COALESCE(em_almac_esguadalajara,'N'::bpchar))
+			INTO v_mty,v_df,v_cun,v_gdl
+		FROM M_WAREHOUSE WHERE M_WAREHOUSE_ID = p_warehouse_id
+		LIMIT 1;
+	END IF;
+
+	--Verifica que sea cualquiera de las ciudades ya hechas
+	IF(p_ruta IS NULL) THEN
+		IF v_mty = 'Y' THEN
+			v_city = 'MTY';
+		ELSIF v_df = 'Y' THEN
+			v_city = 'DF';
+		ELSIF v_cun = 'Y' THEN
+			v_city = 'CUN';
+		ELSIF v_gdl = 'Y' THEN
+			v_city = 'GDL';
+		ELSE
+			--Si no se encuentra el almacen o la organizacion
+			IF p_org_id IS NOT NULL THEN
+				RAISE EXCEPTION '%' , 'La organizacion no esta configurada ad_org_id:<'||p_org_id||'>';
+			ELSE
+				RAISE NOTICE '%' , 'El almacen no esta configurado m_warehouse_id:<'||p_warehouse||'>';
+				--Si no se encuentra en ninguno de estos se manda ocmo que no esta configurado
+				RETURN NULL;
+			END IF;
+		END IF;
+	END IF;
+
+	--Busca las Tarifas
+	SELECT  pc.maniobras,pc.honorarios,pc.tarifa_flete_terrestre,pc.tarifa_flete_mar_usd 
+	INTO v_maniobras,v_honorarios,v_flete_terrestre,v_flete_mar
+	FROM almac_conex_prod cp
+	INNER JOIN almac_puertos_conexion pc ON pc.almac_puertos_conexion_id = cp.almac_puertos_conexion_id AND pc.name LIKE '%/'||UPPER(v_city) AND cp.m_product_id = p_product_id
+	WHERE cp.m_product_id = p_product_id and cp.ad_client_id = '0BD13E24E0F94596B61414BD72225EB8'
+	LIMIT 1;
+
+	--Busca el Margen que s va a aplicar
+	IF(UPPER(p_margen) = 'M') THEN
+		SELECT p.em_dmprod_depth,p.em_almac_fob_usd,p.em_dmprod_arancel,p.em_dmprod_depth,em_almac_margen_minimo 
+		INTO v_product_depth,v_costo_fob,v_arancel,v_product_depth,v_margen
+		FROM m_product p 
+		INNER JOIN m_product_category pc ON pc.m_product_category_id = p.m_product_category_id AND p.m_product_id = p_product_id
+		LIMIT 1;
+
+	IF(v_product_depth is null or ROUND(v_product_depth,4) = ROUND(0,4)) THEN
+		RETURN 0;
+	END IF;
+	ELSIF (UPPER(p_margen) = 'I') THEN
+		SELECT p.em_dmprod_depth,p.em_almac_fob_usd,p.em_dmprod_arancel,p.em_dmprod_depth,em_almac_margen_ideal 
+		INTO v_product_depth,v_costo_fob,v_arancel,v_product_depth,v_margen
+		FROM m_product p 
+		INNER JOIN m_product_category pc ON pc.m_product_category_id = p.m_product_category_id AND p.m_product_id = p_product_id
+		LIMIT 1;
+	ELSE
+		SELECT p.em_dmprod_depth,p.em_almac_fob_usd,p.em_dmprod_arancel,p.em_dmprod_depth,0::NUMERIC 
+		INTO v_product_depth,v_costo_fob,v_arancel,v_product_depth,v_margen
+		FROM m_product p 
+		INNER JOIN m_product_category pc ON pc.m_product_category_id = p.m_product_category_id AND p.m_product_id = p_product_id
+		LIMIT 1;
+	END IF;
+
+	v_maniobras = COALESCE(v_maniobras,0);
+	v_honorarios = COALESCE(v_honorarios,0);
+	v_flete_terrestre = COALESCE(v_flete_terrestre,0);
+	v_flete_mar = COALESCE(v_flete_mar,0);
+	v_product_depth = COALESCE(v_product_depth,0.000000000000000001);
+	v_costo_fob = COALESCE(v_costo_fob,0);
+	v_arancel = COALESCE(v_arancel,0);
+	v_margen = COALESCE(v_margen,0);
+	IF v_product_depth = 0 THEN
+	v_product_depth = 0.0000000000000000000000001;
+	END IF;
+	
+	--Variables 
+	v_C1 = v_maniobras+v_honorarios+v_flete_terrestre+v_flete_mar;
+	v_C2 = 24000/(3000*v_product_depth);
+	v_C3 = v_costo_fob;
+	v_C4 = v_arancel/100;
+	v_C5 = v_flete_mar;
+	IF(UPPER(p_margen) <> 'M' AND UPPER(p_margen) <> 'I' ) THEN
+		RETURN (v_C1/ v_C2 + v_C3 + v_C4*(v_C3 + v_C5 / v_C2) +0.008*(v_C3 + v_C5 / v_C2) +0.01*(v_C3 + v_C5 / v_C2));
+	END IF;
+	--Formula para calculo de Costo USD LAB
+	RETURN (v_C1/ v_C2 + v_C3 + v_C4*(v_C3 + v_C5 / v_C2) +0.008*(v_C3 + v_C5 / v_C2) +0.01*(v_C3 + v_C5 / v_C2))/(1-(v_margen/100));
+EXCEPTION 
+WHEN OTHERS THEN
+  DBMS_OUTPUT.PUT_LINE( 'v_c1 = '||v_C1);
+  DBMS_OUTPUT.PUT_LINE( 'v_c2 = '||v_C2);
+  DBMS_OUTPUT.PUT_LINE( 'v_c3 = '||v_C3);
+  DBMS_OUTPUT.PUT_LINE( 'v_c4 = '||v_C4);
+  DBMS_OUTPUT.PUT_LINE( 'v_c5 = '||v_C5);
+  DBMS_OUTPUT.PUT_LINE('Error Maniobras:'||v_maniobras);
+  DBMS_OUTPUT.PUT_LINE('Error Honorarios:'||v_honorarios);
+  DBMS_OUTPUT.PUT_LINE('Error Flete Terrestre:'||v_flete_terrestre);
+  DBMS_OUTPUT.PUT_LINE('Error flete de mar:'||v_flete_mar);
+  DBMS_OUTPUT.PUT_LINE('Error product_depth:'||v_product_depth);
+  DBMS_OUTPUT.PUT_LINE('Error Costo FOB'||v_costo_fob);
+  DBMS_OUTPUT.PUT_LINE('Error Arancel'||v_arancel);
+  RAISE;
+END ALMAC_CALCULA_COSTO
+]]></body>
+    </function>
+  </database>

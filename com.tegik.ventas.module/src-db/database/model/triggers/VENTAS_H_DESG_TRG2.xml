@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_H_DESG_TRG2">
+    <trigger name="VENTAS_H_DESG_TRG2" table="VENTAS_HISTORIAL_DESGLOCE" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[ 
+v_product  VARCHAR(32);
+        
+BEGIN
+    SELECT M_PRODUCT_ID INTO v_product 
+	FROM C_ORDERLINE WHERE C_ORDERLINE_ID = 
+		(SELECT C_ORDERLINE_ID FROM VENTAS_ORDLINE_DETAIL WHERE VENTAS_ORDLINE_DETAIL_ID = :NEW.VENTAS_ORDLINE_DETAIL_ID);
+
+    :NEW.M_PRODUCT_ID = v_product;
+
+    END VENTAS_H_DESG_TRG2
+]]></body>
+    </trigger>
+  </database>

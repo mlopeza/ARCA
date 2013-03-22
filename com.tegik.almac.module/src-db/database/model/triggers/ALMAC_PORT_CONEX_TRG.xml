@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_PORT_CONEX_TRG">
+    <trigger name="ALMAC_PORT_CONEX_TRG" table="ALMAC_PUERTOS_CONEXION" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[v_pais VARCHAR2(60);
+v_puerto VARCHAR2(60);
+v_city VARCHAR2(60);
+BEGIN
+
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+
+      SELECT TRIM(COALESCE(ctl.name,'NA')) INTO v_pais
+	FROM almac_puertos ap
+	INNER JOIN C_COUNTRY c ON c.c_country_id = ap.c_country_id AND ap.almac_puertos_id = :new.Desde_Puerto
+	LEFT JOIN C_COUNTRY_TRL ctl ON c.c_country_id = ctl.c_country_id AND ctl.ad_language = 'es_ES';
+
+      SELECT TRIM(COALESCE(NAME,'NA')) INTO v_puerto FROM almac_puertos WHERE almac_puertos_id = :new.Desde_Puerto;
+      SELECT TRIM(COALESCE(locode,'NA')) INTO v_city FROM c_city WHERE c_city_id = :new.c_city_id;
+  --  Default Accounts for all AcctSchema
+  IF(INSERTING OR UPDATING) THEN
+	:new.NAME = v_pais || ' - ' || v_puerto ||'/'|| v_city;
+  END IF;
+
+IF DELETING THEN RETURN OLD; ELSE RETURN NEW; END IF;
+END ALMAC_PORT_CONEX_TRG
+]]></body>
+    </trigger>
+  </database>

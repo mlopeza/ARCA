@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE AD_CLIENT">
+    <table name="AD_CLIENT" primaryKey="AD_CLIENT_KEY">
+      <column name="EM_ALMAC_CRATE_USDEUR" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_CRATE_USDMXN" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+    </table>
+  </database>

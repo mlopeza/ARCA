@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE M_PRODUCT">
+    <table name="M_PRODUCT" primaryKey="M_PRODUCT_KEY">
+      <column name="EM_DMPROD_TIPOPIEDRA_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_USO_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_AREAUSO_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_COLOR_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_COUNTRY_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_TILEOSLAB" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_ACABADO" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_ISOUTLET" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_HEIGHT" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_WIDTH" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_ISARANCEL" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_PRECIOFOB" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_ARANCEL" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_DMPROD_DEPTH" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <foreign-key foreignTable="DMPROD_AREAUSO" name="EM_DMPROD_AREAUSO_FK">
+        <reference local="EM_DMPROD_AREAUSO_ID" foreign="DMPROD_AREAUSO_ID"/>
+      </foreign-key>
+      <foreign-key foreignTable="DMPROD_COLOR" name="EM_DMPROD_COLOR_FK">
+        <reference local="EM_DMPROD_COLOR_ID" foreign="DMPROD_COLOR_ID"/>
+      </foreign-key>
+      <foreign-key foreignTable="C_COUNTRY" name="EM_DMPROD_COUNTRY_FK">
+        <reference local="EM_DMPROD_COUNTRY_ID" foreign="C_COUNTRY_ID"/>
+      </foreign-key>
+      <foreign-key foreignTable="DMPROD_TIPOPIEDRA" name="EM_DMPROD_TIPOPIEDRA_FK">
+        <reference local="EM_DMPROD_TIPOPIEDRA_ID" foreign="DMPROD_TIPOPIEDRA_ID"/>
+      </foreign-key>
+      <foreign-key foreignTable="DMPROD_USO" name="EM_DMPROD_USO_FK">
+        <reference local="EM_DMPROD_USO_ID" foreign="DMPROD_USO_ID"/>
+      </foreign-key>
+    </table>
+  </database>

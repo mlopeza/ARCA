@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="VENTAS_Ventas_Cliente" pageWidth="595" pageHeight="842" orientation="Landscape" whenNoDataType="NoDataSection" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.6105100000000017"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50" isBold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18" isBold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14" isBold="true" pdfFontName="Times-Roman"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#ACC5D7"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="BASE_WEB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/web"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="USER_CLIENT" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Date_start" class="java.util.Date">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Date_end" class="java.util.Date">
+		<defaultValueExpression><![CDATA[null]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/home/luis/tegik/Reportes/ARCA/Ventas/ventas_producto/"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Date_start_aux" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{Date_start} == null ? " ": " AND date(i.DateInvoiced) >= date('" + $P{Date_start} + "')"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Date_end_aux" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{Date_end} == null ? " ": " AND date(i.DateInvoiced) <= date('" + $P{Date_end} + "')"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Cliente" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="Cliente_aux" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[($P{Cliente}.equals("") ? "" : " AND bp.c_bpartner_id = '"+$P{Cliente}+"'")]]></defaultValueExpression>
+	</parameter>
+	<parameter name="USER_ORG" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT bp.c_bpartner_id AS client_id,
+       name AS cliente,
+       taxid AS rfc,
+       tot.total
+FROM c_bpartner bp
+  INNER JOIN (SELECT i.c_bpartner_id,
+                     SUM(il.LineNetAmt + il.TaxAmt) AS total
+              FROM c_invoiceline il
+                INNER JOIN c_invoice i ON i.c_invoice_id = il.c_invoice_id
+                INNER JOIN m_product p ON p.m_product_id = il.m_product_id
+              WHERE il.ad_Client_ID IN ($P!{USER_CLIENT})
+              AND   i.issotrx = 'Y'
+              AND   i.DocStatus = 'CO'
+              AND   p.issold = 'Y'
+              AND   p.isstocked = 'Y'
+              AND   p.issold = 'Y'
+              AND   il.LineNetAmt + il.TaxAmt > 0
+              $P!{Date_start_aux}
+              $P!{Date_end_aux}
+              GROUP BY i.c_bpartner_id) tot ON bp.c_bpartner_id = tot.c_bpartner_id
+WHERE ad_client_id IN ($P!{USER_CLIENT}) $P!{Cliente_aux}
+order by tot.total DESC]]>
+	</queryString>
+	<field name="client_id" class="java.lang.String"/>
+	<field name="cliente" class="java.lang.String"/>
+	<field name="rfc" class="java.lang.String"/>
+	<field name="total" class="java.math.BigDecimal"/>
+	<variable name="org_id" class="java.lang.String">
+		<variableExpression><![CDATA[]]></variableExpression>
+		<initialValueExpression><![CDATA[new String($P{USER_ORG}).split(",")[1].substring(1,33)]]></initialValueExpression>
+	</variable>
+	<group name="Group1">
+		<groupExpression><![CDATA[(int)($V{REPORT_COUNT}/15)]]></groupExpression>
+	</group>
+	<group name="Group2">
+		<groupExpression><![CDATA[(int)($V{REPORT_COUNT}/5)]]></groupExpression>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="140" splitType="Stretch">
+			<staticText>
+				<reportElement x="191" y="0" width="308" height="63" forecolor="#00447B"/>
+				<textElement textAlignment="Center">
+					<font size="24"/>
+				</textElement>
+				<text><![CDATA[Reporte de ventas por cliente]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="407" y="106" width="144" height="15" forecolor="#063167"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="104" y="106" width="101" height="15"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="9"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$P{Date_start}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="0" y="106" width="97" height="15" forecolor="#000000"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fecha de inicio:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="0" y="121" width="97" height="15" forecolor="#000000"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fecha de fin:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="104" y="121" width="101" height="15"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="9"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[$P{Date_end}]]></textFieldExpression>
+			</textField>
+			<image hAlign="Right" isUsingCache="true">
+				<reportElement x="0" y="0" width="170" height="91" isRemoveLineWhenBlank="true"/>
+				<imageExpression class="java.awt.Image"><![CDATA[org.openbravo.erpCommon.utility.Utility.showImageLogo("yourcompanydoc",$V{org_id})]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<detail>
+		<band height="35" splitType="Stretch">
+			<subreport>
+				<reportElement x="1" y="2" width="553" height="18" isRemoveLineWhenBlank="true"/>
+				<subreportParameter name="Date_end">
+					<subreportParameterExpression><![CDATA[$P{Date_end}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="USER_CLIENT">
+					<subreportParameterExpression><![CDATA[$P{USER_CLIENT}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="Rfc">
+					<subreportParameterExpression><![CDATA[$F{rfc}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="Cliente">
+					<subreportParameterExpression><![CDATA[$F{cliente}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BASE_WEB">
+					<subreportParameterExpression><![CDATA[$P{BASE_WEB}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="Client_id">
+					<subreportParameterExpression><![CDATA[$F{client_id}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="Date_start">
+					<subreportParameterExpression><![CDATA[$P{Date_start}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/modules/com.tegik.ventas.module/src/com/tegik/ventas/module/erpReports/VENTAS_Ventas_Cliente_sub.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="37" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="170" height="37" forecolor="#00447B" backcolor="#00447B"/>
+				<textField evaluationTime="Report">
+					<reportElement style="Column header" x="74" y="7" width="62" height="20" forecolor="#FFFFFF"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="SansSerif" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<elementGroup/>
+				<textField>
+					<reportElement style="Column header" x="0" y="7" width="74" height="20" forecolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Monospaced" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Página "+$V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="483" splitType="Prevent">
+			<pieChart>
+				<chart>
+					<reportElement x="1" y="0" width="554" height="471"/>
+					<chartTitle/>
+					<chartSubtitle/>
+					<chartLegend/>
+				</chart>
+				<pieDataset maxCount="10">
+					<keyExpression><![CDATA[$F{cliente}]]></keyExpression>
+					<valueExpression><![CDATA[$F{total}]]></valueExpression>
+					<otherKeyExpression><![CDATA["Otros"]]></otherKeyExpression>
+				</pieDataset>
+				<piePlot>
+					<plot/>
+					<itemLabel color="#000000" backgroundColor="#FFFFFF"/>
+				</piePlot>
+			</pieChart>
+		</band>
+	</summary>
+	<noData>
+		<band height="50">
+			<staticText>
+				<reportElement x="0" y="10" width="551" height="30" forecolor="#00447B"/>
+				<textElement textAlignment="Center">
+					<font size="20"/>
+				</textElement>
+				<text><![CDATA[No se encontraron datos]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

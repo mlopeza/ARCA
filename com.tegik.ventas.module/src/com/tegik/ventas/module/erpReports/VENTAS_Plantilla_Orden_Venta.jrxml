@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="VENTAS_Plantilla_Orden_Venta_Compra" pageWidth="595" pageHeight="842" orientation="Landscape" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.3660269107301413"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50" isBold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18" isBold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14" isBold="true" pdfFontName="Times-Roman"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#ACC5D7"/>
+		</conditionalStyle>
+	</style>
+	<style name="table">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TH" mode="Opaque" backcolor="#A9A9A9">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH" mode="Opaque" backcolor="#FFBFBF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<subDataset name="Table Dataset 1"/>
+	<parameter name="BASE_WEB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/web"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DOCUMENT_ID" class="java.lang.String"/>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/home/luis/Dropbox/tegik/Reportes/ARCA/Ventas/Imp Venta/"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT ord.ad_org_id as org, (SELECT printname
+       FROM c_doctype
+       WHERE c_doctype_id = ord.c_doctypetarget_id)
+AS doctype,
+       ord.c_order_id,
+       COALESCE(curr.iso_code,'') iso_code,
+       ord.DateORdered,
+       COALESCE(ord.DocumentNo,'') documentno,
+       pat.Name Pago,
+       COALESCE(usr.firstname || ' ' || usr.lastname,'') Representante,
+       COALESCE(usr.email,'') email,
+       COALESCE(usr.phone,'') telefono,
+       COALESCE(usr.phone2,'') telefono2,
+       ord.DatePromised,
+       COALESCE(bp.Name,'') BPartner,
+       COALESCE(lbt.Address1,'') BTcalle,
+       COALESCE(lbt.Address2,'') BTcolonia,
+       COALESCE(lbt.City,'') BTciudad,
+       COALESCE(rbt.Name,'') BTestado,
+       COALESCE(cbt.Name,'') BTpais,
+       COALESCE(lbt.Postal,'') BTcp,
+       COALESCE(bto.Phone,'') BTtelefono,
+       COALESCE(dlo.Address1,'') Dcalle,
+       COALESCE(dlo.Address2,'') Dcolonia,
+       COALESCE(dlo.City,'') Dciudad,
+       COALESCE(rlo.Name,'') Destado,
+       COALESCE(clo.Name,'') Dpais,
+       COALESCE(dlo.Postal,'') Dcp,
+       COALESCE(dbl.Phone,'') Dtelefono,
+       COALESCE(ord.TotalLines,0.00) subtotal,
+       COALESCE(ord.GrandTotal,0.00) total,
+       COALESCE((ord.GrandTotal - ord.TotalLines),0.00) iva,
+       ord.ad_org_id organizacion,
+       ord.description,
+       ord.poreference referencia
+FROM C_Order ord
+  INNER JOIN C_PaymentTerm pat ON pat.C_PaymentTerm_ID = ord.C_PaymentTerm_ID
+  LEFT JOIN c_currency curr ON ord.C_Currency_ID = curr.C_Currency_ID
+  LEFT JOIN AD_User usr ON usr.AD_User_ID = ord.SalesRep_ID
+  INNER JOIN C_BPartner bp ON bp.C_BPartner_ID = ord.C_BPartner_ID
+  INNER JOIN C_BPartner_Location bto ON bto.C_BPartner_Location_ID = ord.c_bpartner_location_id
+  LEFT JOIN C_Location lbt ON lbt.C_Location_ID = bto.C_Location_ID
+  LEFT JOIN C_Country cbt ON cbt.C_Country_ID = lbt.C_Country_ID
+  INNER JOIN AD_Client adc ON ord.AD_Client_ID = adc.AD_Client_ID
+  LEFT JOIN C_BPartner_Location dbl ON dbl.C_BPartner_Location_ID = ord.Delivery_Location_ID
+  LEFT JOIN C_Location dlo ON dlo.C_Location_ID = dbl.C_Location_ID
+  LEFT JOIN C_Country clo ON clo.C_Country_ID = dlo.C_Country_ID
+  LEFT JOIN C_Region rlo ON rlo.C_Region_ID = dlo.C_Region_ID
+  LEFT JOIN C_Region rbt ON lbt.C_Region_ID = rbt.C_Region_ID
+WHERE C_Order_ID = $P{DOCUMENT_ID}]]>
+	</queryString>
+	<field name="org" class="java.lang.String"/>
+	<field name="doctype" class="java.lang.String"/>
+	<field name="c_order_id" class="java.lang.String"/>
+	<field name="iso_code" class="java.lang.String"/>
+	<field name="dateordered" class="java.sql.Timestamp"/>
+	<field name="documentno" class="java.lang.String"/>
+	<field name="pago" class="java.lang.String"/>
+	<field name="representante" class="java.lang.String"/>
+	<field name="email" class="java.lang.String"/>
+	<field name="telefono" class="java.lang.String"/>
+	<field name="telefono2" class="java.lang.String"/>
+	<field name="datepromised" class="java.sql.Timestamp"/>
+	<field name="bpartner" class="java.lang.String"/>
+	<field name="btcalle" class="java.lang.String"/>
+	<field name="btcolonia" class="java.lang.String"/>
+	<field name="btciudad" class="java.lang.String"/>
+	<field name="btestado" class="java.lang.String"/>
+	<field name="btpais" class="java.lang.String"/>
+	<field name="btcp" class="java.lang.String"/>
+	<field name="bttelefono" class="java.lang.String"/>
+	<field name="dcalle" class="java.lang.String"/>
+	<field name="dcolonia" class="java.lang.String"/>
+	<field name="dciudad" class="java.lang.String"/>
+	<field name="destado" class="java.lang.String"/>
+	<field name="dpais" class="java.lang.String"/>
+	<field name="dcp" class="java.lang.String"/>
+	<field name="dtelefono" class="java.lang.String"/>
+	<field name="subtotal" class="java.math.BigDecimal"/>
+	<field name="total" class="java.math.BigDecimal"/>
+	<field name="iva" class="java.math.BigDecimal"/>
+	<field name="organizacion" class="java.lang.String"/>
+	<field name="description" class="java.lang.String"/>
+	<field name="referencia" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="237" splitType="Stretch">
+			<textField>
+				<reportElement x="225" y="0" width="330" height="64" forecolor="#000000"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" markup="none">
+					<font size="24"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{doctype}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="64" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date($F{dateordered}.getTime()))]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="299" y="64" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fecha:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="299" y="78" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No. Pedido:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="78" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{documentno}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="299" y="107" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Termino de pago:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="107" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{pago}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="299" y="121" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Representante de ventas:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="121" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{representante}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="25" y="132" width="133" height="18"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{bpartner}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="299" y="155" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fecha Comprometida:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="155" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new java.text.SimpleDateFormat("dd-MM-yyyy").format(new java.util.Date($F{datepromised}.getTime()))]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="299" y="179" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Dirección de entrega:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="25" y="179" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Dirección de Factura:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="25" y="193" width="238" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{btcalle}+' '+($F{btcolonia}==null?" ":$F{btcolonia})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="25" y="207" width="238" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{btciudad}+' '+($F{btestado}==null?" ":$F{btestado})+' '+$F{btpais}+' '+$F{btcp}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="25" y="221" width="238" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{bttelefono}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="299" y="193" width="233" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{dcalle}+' '+($F{dcolonia}==null?" ":$F{dcolonia})]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="299" y="207" width="233" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{dciudad}+' '+($F{destado}==null?" ":$F{destado})+' '+$F{dpais}+' '+$F{dcp}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="299" y="221" width="233" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{dtelefono}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="299" y="139" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Moneda:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="139" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{iso_code}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="299" y="93" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No. Referencia:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="93" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{referencia}]]></textFieldExpression>
+			</textField>
+			<image hAlign="Right" isUsingCache="true">
+				<reportElement x="0" y="0" width="170" height="91" isRemoveLineWhenBlank="true"/>
+				<imageExpression class="java.awt.Image"><![CDATA[org.openbravo.erpCommon.utility.Utility.showImageLogo("yourcompanydoc",$F{org})]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="26" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="4" y="15" width="551" height="2" forecolor="#5D5D5D" backcolor="#5D5D5D"/>
+			</frame>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="22" splitType="Stretch">
+			<frame>
+				<reportElement style="Row" mode="Opaque" x="0" y="0" width="551" height="4" forecolor="#000000"/>
+			</frame>
+			<subreport>
+				<reportElement x="4" y="4" width="551" height="10"/>
+				<subreportParameter name="DOCUMENT_ID">
+					<subreportParameterExpression><![CDATA[$P{DOCUMENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/modules/com.tegik.ventas.module/src/com/tegik/ventas/module/erpReports/VENTAS_Plantilla_Orden_Venta_Compra_sub.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="69">
+			<frame>
+				<reportElement mode="Opaque" x="4" y="6" width="551" height="2" forecolor="#5D5D5D" backcolor="#5D5D5D"/>
+			</frame>
+			<staticText>
+				<reportElement style="Column header" mode="Opaque" x="317" y="19" width="123" height="14" forecolor="#FFFFFF" backcolor="#D16232"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Subtotal:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" pattern="$ #,##0.00">
+				<reportElement style="Detail" positionType="Float" x="440" y="19" width="110" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{subtotal}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" mode="Opaque" x="317" y="49" width="123" height="14" forecolor="#FFFFFF" backcolor="#D16232"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" pattern="$ #,##0.00">
+				<reportElement style="Detail" positionType="Float" x="440" y="49" width="110" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{total}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" mode="Opaque" x="317" y="33" width="123" height="14" forecolor="#FFFFFF" backcolor="#D16232"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Impuestos:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" pattern="$ #,##0.00">
+				<reportElement style="Detail" positionType="Float" x="440" y="33" width="110" height="14"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{iva}]]></textFieldExpression>
+			</textField>
+			<frame>
+				<reportElement mode="Opaque" x="317" y="47" width="234" height="2" forecolor="#5D5D5D" backcolor="#5D5D5D"/>
+			</frame>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="37" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="170" height="37" forecolor="#D16232" backcolor="#D16232"/>
+				<textField evaluationTime="Report">
+					<reportElement style="Column header" x="74" y="7" width="62" height="20" forecolor="#FFFFFF"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="SansSerif" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<elementGroup/>
+				<textField>
+					<reportElement style="Column header" x="0" y="7" width="74" height="20" forecolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Monospaced" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Página "+$V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="78" splitType="Prevent">
+			<subreport>
+				<reportElement x="0" y="58" width="555" height="12"/>
+				<subreportParameter name="SUBREPORT_DIR">
+					<subreportParameterExpression><![CDATA[$P{SUBREPORT_DIR}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="DOCUMENT_ID">
+					<subreportParameterExpression><![CDATA[$P{DOCUMENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="BASE_WEB">
+					<subreportParameterExpression><![CDATA[$P{BASE_WEB}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/modules/com.tegik.ventas.module/src/com/tegik/ventas/module/erpReports/VENTAS_Plantilla_Orden_Venta_subreport1.jasper"]]></subreportExpression>
+			</subreport>
+			<staticText>
+				<reportElement x="27" y="0" width="123" height="20"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Observaciones:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" pattern="###0.00" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="27" y="24" width="528" height="28"/>
+				<textElement textAlignment="Left" verticalAlignment="Top">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{description}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

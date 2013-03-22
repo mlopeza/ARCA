@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+  <database name="VIEW COMPRA_CONT_V">
+    <view name="COMPRA_CONT_V"><![CDATA[SELECT dc.compra_desgcont_id AS compra_cont_v_id, dc.ad_client_id, dc.ad_org_id, dc.created, dc.createdby, dc.updated, dc.updatedby, dc.isactive, o.c_order_id, ol.line, ol.m_product_id, dc.compra_contenedor_id, dc.cantidad, c.compra_embarque_id FROM compra_desgcont dc JOIN compra_contenedor c ON c.compra_contenedor_id = dc.compra_contenedor_id JOIN c_orderline ol ON ol.c_orderline_id = dc.c_orderline_id JOIN c_order o ON o.c_order_id = ol.c_order_id AND o.docstatus = 'CO' AND o.issotrx = 'N']]></view>
+  </database>

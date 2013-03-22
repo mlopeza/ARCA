@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE AD_ORG">
+    <table name="AD_ORG" primaryKey="AD_ORG_KEY">
+      <column name="EM_ALMAC_ESMTY" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_ESDF" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_ESCAN" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_ESGDL" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_DESAPARTADO" primaryKey="false" required="true" type="DECIMAL" size="3,0" autoIncrement="false">
+        <default><![CDATA[7]]></default>
+        <onCreateDefault/>
+      </column>
+      <check name="EM_ALMAC_ESCAN_CHECK"><![CDATA[EM_ALMAC_ESCAN IN ('Y', 'N')]]></check>
+      <check name="EM_ALMAC_ESDF_CHECK"><![CDATA[EM_ALMAC_ESDF IN ('Y', 'N')]]></check>
+      <check name="EM_ALMAC_ESGDL_CHECK"><![CDATA[EM_ALMAC_ESGDL IN ('Y', 'N')]]></check>
+      <check name="EM_ALMAC_ESMTY_CHECK"><![CDATA[EM_ALMAC_ESMTY IN ('Y', 'N')]]></check>
+    </table>
+  </database>

@@ -1,0 +1,227 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION VENTAS_FACTURAR_ANTICIPO">
+    <function name="VENTAS_FACTURAR_ANTICIPO" type="NULL">
+      <parameter name="p_pinstance_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_order_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_invoice_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_finiquito" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[/*************************************************************************
+  * The contents of this file are subject to the Compiere Public
+  * License 1.1 ("License"); You may not use this file except in
+  * compliance with the License. You may obtain a copy of the License in
+  * the legal folder of your Openbravo installation.
+  * Software distributed under the License is distributed on an
+  * "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+  * implied. See the License for the specific language governing rights
+  * and limitations under the License.
+  * The Original Code is  Compiere  ERP &  Business Solution
+  * The Initial Developer of the Original Code is Jorg Janke and ComPiere, Inc.
+  * Portions created by Jorg Janke are Copyright (C) 1999-2001 Jorg Janke,
+  * parts created by ComPiere are Copyright (C) ComPiere, Inc.;
+  * All Rights Reserved.
+  * Contributor(s): Openbravo SLU
+  * Contributions are Copyright (C) 2001-2008 Openbravo, S.L.U.
+  *
+  * Specifically, this derivative work is based upon the following Compiere
+  * file and version.
+  *************************************************************************
+  * $Id: C_Invoice_CreateReceipt.sql,v 1.2 2002/05/22 02:48:28 jjanke Exp $
+  ***
+  * Title: Create Receipt (Shipment) From Invoice
+  * Description:
+  ************************************************************************/
+  -- Logistice
+  v_ResultStr VARCHAR2(2000):='';
+  v_Message VARCHAR2(2000):='';
+  v_Record_ID VARCHAR2(32);
+  -- Parameter
+  TYPE RECORD IS REF CURSOR;
+    Cur_Parameter RECORD;
+    -- Parameter Variables
+    v_M_Locator_ID VARCHAR2(32);
+    --
+    v_DocStatus VARCHAR2(60) ;
+    v_InOut_ID VARCHAR2(32);
+    FINISH_PROCESS BOOLEAN:=false;
+    v_disponible NUMBER;
+    Cur_OrderLine RECORD;
+    v_mensaje VARCHAR (150);
+    v_cantidad NUMBER;
+    v_totalfac NUMBER;
+    v_cuenta NUMBER;
+    v_cantidadreservada NUMBER;
+	cur_reservas RECORD;
+	v_salida VARCHAR(1);
+	v_posicion NUMBER;
+	v_cantidadseparada NUMBER;
+	v_draft NUMBER;
+	v_almacen NUMBER;
+	v_Order_ID VARCHAR2(32);
+	v_Invoice_ID VARCHAR2(32);
+	v_totalAnticipos NUMBER;
+	v_porcentaje NUMBER;
+	v_amortizacion NUMBER;
+	v_totalAmortizado NUMBER;
+	CUR_INVOICE RECORD;
+	v_LineNo NUMBER;
+	v_totalfact NUMBER;
+	v_totalorden NUMBER;
+	v_product VARCHAR(32);
+	v_tc VARCHAR(32);
+	v_tax VARCHAR(32);
+	v_uom VARCHAR(32);
+	v_taxrate NUMBER;
+	v_tipocambio NUMBER;
+  BEGIN
+    --  Update AD_PInstance
+    IF (p_PInstance_ID IS NOT NULL) THEN
+	    DBMS_OUTPUT.PUT_LINE('Updating PInstance - Processing ' || p_PInstance_ID) ;
+	    v_ResultStr:='PInstanceNotFound';
+	    AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'Y', NULL, NULL) ;
+     END IF;
+	  BEGIN --BODY
+	    -- Get Parameters
+	       v_ResultStr:='ReadingParameters';
+	    FOR Cur_Parameter IN
+	      (SELECT i.Record_ID,
+		p.ParameterName,
+		p.P_String,
+		p.P_Number,
+		p.P_Date
+	      FROM AD_PInstance i
+	      LEFT JOIN AD_PInstance_Para p
+		ON i.AD_PInstance_ID=p.AD_PInstance_ID
+	      WHERE i.AD_PInstance_ID=p_PInstance_ID
+	      ORDER BY p.SeqNo
+	      )
+	    LOOP
+	      v_Record_ID:=Cur_Parameter.Record_ID;
+	    END LOOP; -- Get Parameter
+	    -- Read Information from Record
+    IF (p_order_id IS NOT NULL) THEN
+	v_Order_ID = p_order_id;
+    END IF;
+
+    IF (p_invoice_id IS NOT NULL) THEN
+	v_Invoice_ID = p_invoice_id;
+    END IF;
+
+    IF (p_order_id IS NULL AND p_PInstance_ID IS NULL) THEN
+	RAISE_APPLICATION_ERROR(-20000, 'No hay datos') ;
+    END IF;
+
+    SELECT * INTO CUR_INVOICE FROM C_INVOICE WHERE C_INVOICE_ID = v_Invoice_ID;
+
+    /*Datos del producto de anticipo*/
+    SELECT M_PRODUCT_ID, C_TAXCATEGORY_ID, C_UOM_ID INTO v_product, v_tc, v_uom FROM M_PRODUCT WHERE AD_CLIENT_ID = CUR_INVOICE.AD_CLIENT_ID AND EM_VENTAS_ISANTIC = 'Y' ORDER BY CREATED DESC LIMIT 1;
+
+    SELECT C_TAX_ID, 1+(COALESCE(RATE/100,0)) INTO v_tax, v_taxrate FROM C_TAX WHERE C_TAXCATEGORY_ID = v_tc ORDER BY ISDEFAULT DESC LIMIT 1;
+
+    IF (v_product IS NULL) THEN
+	RAISE_APPLICATION_ERROR(-20000, 'No existe un producto de anticipo') ;
+    END IF;
+
+    IF (v_tax IS NULL) THEN
+	RAISE_APPLICATION_ERROR(-20000, 'No existe un impuesto para el producto de anticipo') ;
+    END IF;
+   /*Datos del producto de anticipo*/
+
+
+    SELECT COALESCE(SUM(VENTAS_MONTO_ANTICIPO(GRANDTOTAL,C_INVOICE_ID, v_Order_ID)),0) INTO v_totalAnticipos FROM C_INVOICE WHERE EM_VENTAS_ORDANTICIPO_ID = v_Order_ID AND ISSOTRX = 'Y' AND DOCSTATUS = 'CO';
+	
+    SELECT SUM(COALESCE(EM_VENTAS_PORCANTICIPO, 0)) INTO v_porcentaje FROM C_INVOICE WHERE EM_VENTAS_ORDANTICIPO_ID = v_Order_ID AND ISSOTRX = 'Y' AND DOCSTATUS = 'CO';
+
+    v_porcentaje = COALESCE((v_porcentaje/100),0);
+
+    SELECT SUM(VENTAS_MONTO_ANTICIPO(COALESCE(IL.LINENETAMT,0),I.C_INVOICE_ID,v_Order_ID)*(1 + COALESCE(T.RATE / 100,0))) INTO v_totalAmortizado
+    FROM C_INVOICELINE IL 
+    INNER JOIN C_INVOICE I ON IL.C_INVOICE_ID = I.C_INVOICE_ID 
+	AND I.DOCSTATUS = 'CO' 
+	AND I.C_ORDER_ID = v_Order_ID 
+	AND M_PRODUCT_ID IN (SELECT M_PRODUCT_ID FROM M_PRODUCT WHERE EM_VENTAS_ISANTIC = 'Y') 
+	AND I.C_INVOICE_ID NOT IN (SELECT IR.C_INVOICE_ID FROM C_INVOICE_REVERSE IR)
+    INNER JOIN C_TAX T ON IL.C_TAX_ID = T.C_TAX_ID;
+
+    SELECT COALESCE(GRANDTOTAL,0) INTO v_totalfact FROM C_INVOICE WHERE C_INVOICE_ID = v_Invoice_ID;
+
+    select em_ventas_tcanticipo into v_tipocambio from c_invoice where c_invoice_id = v_Invoice_ID;
+
+    --v_porcentaje = v_totalfact / v_totalorden;
+
+    IF (COALESCE(v_totalAnticipos,0) + COALESCE(v_totalAmortizado,0) <= 0) THEN
+	v_amortizacion = 0;
+    ELSE
+	IF (p_finiquito = 'Y') THEN
+		v_amortizacion = (COALESCE(v_totalAnticipos,0) + COALESCE(v_totalAmortizado,0)) * v_tipocambio;
+		UPDATE C_INVOICE SET EM_VENTAS_ISFINIQUITO = 'Y';
+	ELSE
+		v_amortizacion = COALESCE(v_totalfact,0) * COALESCE(v_porcentaje,0);
+		IF (VENTAS_MONTO_ANTICIPO(COALESCE(v_amortizacion,0), v_Invoice_ID, v_Order_ID)  > (COALESCE(v_totalAnticipos,0) + COALESCE(v_totalAmortizado,0))) THEN
+			v_amortizacion = (COALESCE(v_totalAnticipos,0) + COALESCE(v_totalAmortizado,0)) * v_tipocambio;
+		END IF;
+	END IF;
+    END IF;
+	
+    SELECT MAX(LINE) + 10 INTO v_LineNo FROM C_INVOICELINE WHERE C_INVOICE_ID = v_Invoice_ID;
+
+    IF (COALESCE(v_amortizacion, 0.00) > 0.00) THEN
+		v_amortizacion = v_amortizacion/v_taxrate;
+		INSERT
+                INTO C_INVOICELINE
+                      (
+                        C_InvoiceLine_ID, AD_Client_ID, AD_Org_ID, IsActive,
+                        Created, CreatedBy, Updated, UpdatedBy,
+                        C_Invoice_ID, C_OrderLine_ID, M_InOutLine_ID, Line,
+                        Description, M_Product_ID, QtyInvoiced, PriceList,
+                        PriceActual, PriceLimit, LineNetAmt, C_Charge_ID,
+                        ChargeAmt, C_UOM_ID,
+                        C_Tax_ID,  --MODIFIED BY F.IRIAZABAL
+                        QuantityOrder, M_Product_Uom_ID, PriceStd,
+                        m_attributesetinstance_id, taxbaseamt
+                      )
+                      VALUES
+                      (
+                        GET_UUID(), CUR_INVOICE.AD_Client_ID, CUR_INVOICE.AD_Org_ID, 'Y',
+                        now(), '100', now(), '100',
+                        v_Invoice_ID, NULL, NULL, v_LineNo,
+                        'Amortización de anticipo', v_product, -1, v_amortizacion,
+                        v_amortizacion, v_amortizacion, C_Currency_Round(-1*v_amortizacion, CUR_INVOICE.C_Currency_ID, NULL), NULL,
+                        NULL, v_uom,
+                        v_tax,  --MODIFIED BY F.IRIAZABAL
+                        NULL, NULL, v_amortizacion,
+                        NULL, C_Currency_Round(-1*v_amortizacion, CUR_INVOICE.C_Currency_ID, NULL)
+                      )
+                      ;    
+
+	END IF;
+    
+     --FINISH_PROCESS
+    --<<FINISH_PROCESS>>
+    --  Update AD_PInstance
+    IF (p_PInstance_ID IS NOT NULL) THEN
+	AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'N', 1, 'Validar las existencias en las líneas de la orden de venta');
+    END IF;
+    RETURN;
+  END; --BODY
+EXCEPTION
+WHEN OTHERS THEN
+  v_ResultStr:= '@ERROR=' || SQLERRM;
+  DBMS_OUTPUT.PUT_LINE(v_ResultStr) ;
+  ROLLBACK;
+  IF (p_PInstance_ID IS NOT NULL) THEN
+	AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'N', 0, v_ResultStr) ;
+	RETURN;
+  END IF;
+  RAISE v_ResultStr;
+END VENTAS_FACTURAR_ANTICIPO
+]]></body>
+    </function>
+  </database>

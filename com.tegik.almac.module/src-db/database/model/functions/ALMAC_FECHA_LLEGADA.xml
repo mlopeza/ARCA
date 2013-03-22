@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_FECHA_LLEGADA">
+    <function name="ALMAC_FECHA_LLEGADA" type="TIMESTAMP">
+      <parameter name="p_producto" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_contenedor" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_warehouse" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_ingresado" type="CHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[v_mty bpchar;
+    v_df bpchar;
+    v_gdl bpchar;
+    v_cun bpchar;
+    v_salida  timestamp without time zone;
+    v_llegada timestamp without time zone;
+    v_dias_suma NUMBER;
+    v_city VARCHAR2(32);
+BEGIN
+	-- Si el producto ya se ingreso se regresa NULL
+	IF(UPPER(COALESCE(p_ingresado,'N'::bpchar)) = 'Y') OR p_warehouse IS NULL THEN
+	 RETURN NULL;
+	END IF;	
+	-- Busca a donde va el producto, mas bien a que almacen
+	SELECT fecha_embarque INTO v_salida FROM compra_contenedor c where c.compra_contenedor_id = p_contenedor;
+	--Si no tiene fecha de salida regresa Null
+	IF v_salida IS NULL THEN RETURN NULL; END IF;
+
+	--Busca cual va a ser el almacen de llegada
+	SELECT UPPER(COALESCE(em_almac_esmonterrey,'N'::bpchar)),
+	UPPER(COALESCE(em_almac_esdf,'N'::bpchar)),
+	UPPER(COALESCE(em_almac_escancun,'N'::bpchar)),
+	UPPER(COALESCE(em_almac_esguadalajara,'N'::bpchar))
+	INTO v_mty,v_df,v_cun,v_gdl
+	FROM M_WAREHOUSE WHERE M_WAREHOUSE_ID = p_warehouse;
+
+	IF v_mty = 'Y' THEN
+		v_city = 'MTY';
+	ELSIF v_df = 'Y' THEN
+		v_city = 'DF';
+	ELSIF v_cun = 'Y' THEN
+		v_city = 'CUN';
+	ELSIF v_gdl = 'Y' THEN
+		v_city = 'GDL';
+	ELSE
+		RAISE NOTICE '%' , 'El almacen no esta configurado m_warehouse_id:<'||p_warehouse||'>';
+		--Si no se encuentra en ninguno de estos se manda ocmo que no esta configurado
+		RETURN NULL;
+	END IF;
+
+	--Suma los dias que le tomara llegar
+	SELECT COALESCE(pc.dias_transito,0) + COALESCE(pc.dias_despacho,0) INTO v_dias_suma
+	FROM almac_conex_prod cp
+	INNER JOIN almac_puertos_conexion pc ON pc.almac_puertos_conexion_id = cp.almac_puertos_conexion_id AND pc.name LIKE '%/'||UPPER(v_city) AND cp.m_product_id = p_producto
+	WHERE cp.m_product_id = p_producto
+	LIMIT 1;
+	
+	-- Si no encuentra la suma de dias regresa NULL
+	IF v_dias_suma IS NULL OR v_dias_suma = 0 THEN RETURN NULL; END IF;
+	v_llegada = add_days(v_salida,v_dias_suma);
+	--Regresa la suma
+	IF v_llegada IS NULL THEN RETURN NULL; ELSE RETURN v_llegada; END IF;
+END ALMAC_FECHA_LLEGADA
+]]></body>
+    </function>
+  </database>

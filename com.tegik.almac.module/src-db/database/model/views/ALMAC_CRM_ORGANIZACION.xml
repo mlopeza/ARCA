@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+  <database name="VIEW ALMAC_CRM_ORGANIZACION">
+    <view name="ALMAC_CRM_ORGANIZACION"><![CDATA[SELECT ad_org.ad_org_id AS almac_crm_organizacion_id, ad_org.ad_client_id, ad_org.isactive, ad_org.created, ad_org.createdby, ad_org.updated, ad_org.updatedby, ad_org.value, ad_org.name, ad_org.description, ad_org.social_name FROM ad_org WHERE ad_org.ad_client_id = '0BD13E24E0F94596B61414BD72225EB8']]></view>
+  </database>

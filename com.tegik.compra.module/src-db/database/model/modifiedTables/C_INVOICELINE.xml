@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE C_INVOICELINE">
+    <table name="C_INVOICELINE" primaryKey="C_INVOICELINE_KEY">
+      <column name="EM_COMPRA_CONTENEDOR_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <foreign-key foreignTable="COMPRA_CONTENEDOR" name="EM_COMPRA_INVOLI_CONTE_FK">
+        <reference local="EM_COMPRA_CONTENEDOR_ID" foreign="COMPRA_CONTENEDOR_ID"/>
+      </foreign-key>
+    </table>
+  </database>

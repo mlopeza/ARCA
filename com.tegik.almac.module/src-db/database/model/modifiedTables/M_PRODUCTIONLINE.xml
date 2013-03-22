@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE M_PRODUCTIONLINE">
+    <table name="M_PRODUCTIONLINE" primaryKey="M_PRODUCTIONLINE_KEY">
+      <column name="EM_ALMAC_ASI_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <foreign-key foreignTable="M_ATTRIBUTESETINSTANCE" name="EM_ALMAC_PROLINE_ASI_FK">
+        <reference local="EM_ALMAC_ASI_ID" foreign="M_ATTRIBUTESETINSTANCE_ID"/>
+      </foreign-key>
+    </table>
+  </database>

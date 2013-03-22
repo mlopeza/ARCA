@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_DISTRIB_TRG">
+    <trigger name="ALMAC_DISTRIB_TRG" table="M_INOUTLINE" fires="after" insert="true" update="false" delete="false" foreach="row">
+      <body><![CDATA[/*************************************************************************
+* The contents of this file are subject to the Openbravo  Public  License
+* Version  1.1  (the  "License"),  being   the  Mozilla   Public  License
+* Version 1.1  with a permitted attribution clause; you may not  use this
+* file except in compliance with the License. You  may  obtain  a copy of
+* the License at http://www.openbravo.com/legal/license.html
+* Software distributed under the License  is  distributed  on  an "AS IS"
+* basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+* License for the specific  language  governing  rights  and  limitations
+* under the License.
+* The Original Code is Openbravo ERP.
+* The Initial Developer of the Original Code is Openbravo SLU
+* All portions are Copyright (C) 2001-2009 Openbravo SLU
+* All Rights Reserved.
+* Contributor(s):  ______________________________________.
+************************************************************************/
+  v_M_INOUT_ID VARCHAR2(32) ;
+  v_Descripcion VARCHAR2(32) ;
+    
+BEGIN
+    
+	IF AD_isTriggerEnabled()='N' THEN RETURN;
+	END IF;
+
+	SELECT DESCRIPTION INTO v_Descripcion FROM M_ATTRIBUTESETINSTANCE WHERE M_ATTRIBUTESETINSTANCE_ID = :NEW.M_ATTRIBUTESETINSTANCE_ID;
+
+	/*
+	INSERT INTO almac_distrib(
+            almac_distrib_id, ad_client_id, ad_org_id, isactive, 
+            createdby, updatedby, movementqty, m_attributesetinstance_id, 
+            m_inoutline_id, "name", m_product_id, m_locator_id)
+	VALUES (GET_UUID(), :NEW.AD_CLIENT_ID, :NEW.AD_ORG_ID, :NEW.ISACTIVE, 
+            :NEW.CREATEDBY, :NEW.UPDATEDBY, :NEW.EM_ALMAC_MOVEMENTQTY, :NEW.M_ATTRIBUTESETINSTANCE_ID, 
+            :NEW.M_INOUTLINE_ID, v_Descripcion, :NEW.M_PRODUCT_ID, :NEW.M_LOCATOR_ID);
+
+	*/
+
+	END ALMAC_DISTRIB_TRG
+]]></body>
+    </trigger>
+  </database>

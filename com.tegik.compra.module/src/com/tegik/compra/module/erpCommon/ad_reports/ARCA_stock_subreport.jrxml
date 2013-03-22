@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="agentes_subreport1" pageWidth="802" pageHeight="555" orientation="Landscape" whenNoDataType="NoDataSection" columnWidth="802" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="1.8181818181818399"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50" isBold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18" isBold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14" isBold="true" pdfFontName="Times-Roman"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#ACC5D7"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="BASE_WEB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/web"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="user_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_user_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["'" + $P{user_id}+"'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="marca" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_marca" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{marca}.equals("") ? " ": "AND mca.tmarcas_marcas_id='" + $P{marca}+"'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="bpartner_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_bpartner_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{bpartner_id}.equals("") ? " ": "AND b.c_bpartner_id='" + $P{bpartner_id}+"'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="USER_CLIENT" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="p_id" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_fromfac" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_tofac" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_salesrep_id" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="prodName" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT P.NAME AS etiqueta,
+  WH.NAME AS almacen,
+
+
+W.CANTIDAD AS INVENTARIO,  COALESCE(X.RESERVADO,0) AS RESERVADO, W.CANTIDAD - COALESCE(X.RESERVADO,0) AS DISPONIBLE
+,
+CASE WHEN COALESCE(X.ORDENADO,0)<0 THEN 0 ELSE COALESCE(X.ORDENADO,0) END AS ORDENADO,
+CASE WHEN COALESCE(X.ORDENADO,0) - COALESCE(X.RESERVADO,0)<0 THEN 0 ELSE COALESCE(X.ORDENADO,0) - COALESCE(X.RESERVADO,0) END AS BACKORDER
+
+
+
+FROM
+
+(SELECT SD.M_PRODUCT_ID, L.M_WAREHOUSE_ID,  SUM(QTYONHAND) AS CANTIDAD FROM
+M_STORAGE_DETAIL SD
+INNER JOIN M_LOCATOR L ON L.M_LOCATOR_ID = SD.M_LOCATOR_ID
+GROUP BY SD.M_PRODUCT_ID, L.M_WAREHOUSE_ID) W
+INNER JOIN M_WAREHOUSE WH ON WH.M_WAREHOUSE_ID = W.M_WAREHOUSE_ID
+INNER JOIN M_PRODUCT P ON W.M_PRODUCT_ID=P.M_PRODUCT_ID
+LEFT JOIN
+(SELECT OL.M_PRODUCT_ID, O.M_WAREHOUSE_ID, COALESCE(SUM(OL.QTYORDERED - OL.QTYDELIVERED),0) AS ORDENADO,  COALESCE(SUM(A.QTY - OL.QTYDELIVERED),0) AS RESERVADO
+FROM C_ORDERLINE OL
+INNER JOIN C_ORDER O ON O.C_ORDER_ID = OL.C_ORDER_ID AND O.DOCSTATUS IN ('IP', 'CO') AND O.ISSOTRX='Y'
+INNER JOIN
+(SELECT OL2.C_ORDERLINE_ID, SUM(COALESCE(OLDD.QTY,0)) AS QTY
+FROM C_ORDERLINE OL2
+LEFT JOIN VENTAS_ORDLINE_DETAIL OLDD ON OL2.C_ORDERLINE_ID = OLDD.C_ORDERLINE_ID
+GROUP BY OL2.C_ORDERLINE_ID) A
+ON OL.C_ORDERLINE_ID = A.C_ORDERLINE_ID
+GROUP BY OL.M_PRODUCT_ID, O.M_WAREHOUSE_ID) X
+ON W.M_PRODUCT_ID = X.M_PRODUCT_ID AND X.M_WAREHOUSE_ID = w.M_WAREHOUSE_ID
+WHERE W.M_PRODUCT_ID IN ($P{p_id})]]>
+	</queryString>
+	<field name="etiqueta" class="java.lang.String"/>
+	<field name="almacen" class="java.lang.String"/>
+	<field name="inventario" class="java.math.BigDecimal"/>
+	<field name="reservado" class="java.math.BigDecimal"/>
+	<field name="disponible" class="java.math.BigDecimal"/>
+	<field name="ordenado" class="java.math.BigDecimal"/>
+	<field name="backorder" class="java.math.BigDecimal"/>
+	<variable name="sumStock" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{inventario}]]></variableExpression>
+	</variable>
+	<variable name="sumReservado" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{reservado}]]></variableExpression>
+	</variable>
+	<variable name="sumDisponible" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{disponible}]]></variableExpression>
+	</variable>
+	<variable name="sumOrdenado" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{ordenado}]]></variableExpression>
+	</variable>
+	<variable name="sumBO" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{backorder}]]></variableExpression>
+	</variable>
+	<columnHeader>
+		<band height="41" splitType="Immediate">
+			<staticText>
+				<reportElement style="Column header" x="5" y="29" width="205" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Almacén]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="210" y="29" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Inventario]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="5" y="39" width="562" height="2" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<staticText>
+				<reportElement style="Column header" x="280" y="29" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Reservado]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="350" y="29" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Disponible]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="427" y="29" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Ordenado (Vta)]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="5" width="5" height="36" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<textField isStretchWithOverflow="true" pattern="###0">
+				<reportElement style="Detail" positionType="Float" x="14" y="5" width="553" height="12"/>
+				<textElement textAlignment="Left">
+					<font fontName="SansSerif" size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{prodName}]]></textFieldExpression>
+			</textField>
+			<frame>
+				<reportElement mode="Opaque" x="567" y="5" width="5" height="36" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<staticText>
+				<reportElement style="Column header" x="497" y="29" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="7" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Sug. de Compra]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="572" height="5" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<staticText>
+				<reportElement style="Detail" positionType="Float" x="25" y="17" width="542" height="12"/>
+				<textElement textAlignment="Left" markup="none">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<text><![CDATA[En stock]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="10" splitType="Immediate">
+			<frame>
+				<reportElement style="Row" mode="Opaque" x="5" y="0" width="562" height="10" forecolor="#000000"/>
+				<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+					<reportElement style="Detail" positionType="Float" x="205" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{inventario}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0">
+					<reportElement style="Detail" positionType="Float" x="9" y="0" width="196" height="10"/>
+					<textElement textAlignment="Left">
+						<font fontName="SansSerif" size="7"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{almacen}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+					<reportElement style="Detail" positionType="Float" x="275" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{reservado}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+					<reportElement style="Detail" positionType="Float" x="345" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{disponible}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+					<reportElement style="Detail" positionType="Float" x="422" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{ordenado}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+					<reportElement style="Detail" positionType="Float" x="492" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{backorder}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="567" y="0" width="5" height="10" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="10" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+		</band>
+	</detail>
+	<summary>
+		<band height="12" splitType="Immediate">
+			<staticText>
+				<reportElement style="Column header" x="5" y="2" width="205" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="5" y="0" width="562" height="2" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+				<reportElement style="Detail" positionType="Float" x="210" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumStock}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+				<reportElement style="Detail" positionType="Float" x="280" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumReservado}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+				<reportElement style="Detail" positionType="Float" x="350" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumDisponible}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+				<reportElement style="Detail" positionType="Float" x="427" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumOrdenado}]]></textFieldExpression>
+			</textField>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="12" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="567" y="0" width="5" height="12" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<textField isStretchWithOverflow="true" pattern="###0.0000;-###0.0000">
+				<reportElement style="Detail" positionType="Float" x="497" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumBO}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+	<noData>
+		<band height="29">
+			<frame>
+				<reportElement mode="Opaque" x="567" y="5" width="5" height="24" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<staticText>
+				<reportElement style="Column header" x="14" y="17" width="273" height="12" forecolor="#000000"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="10" isBold="false"/>
+				</textElement>
+				<text><![CDATA[No hay stock]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="5" width="5" height="24" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="572" height="5" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<textField isStretchWithOverflow="true" pattern="###0">
+				<reportElement style="Detail" positionType="Float" x="14" y="5" width="553" height="12"/>
+				<textElement textAlignment="Left">
+					<font fontName="SansSerif" size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$P{prodName}]]></textFieldExpression>
+			</textField>
+		</band>
+	</noData>
+</jasperReport>

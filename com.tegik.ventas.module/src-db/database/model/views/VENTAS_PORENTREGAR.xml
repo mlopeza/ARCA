@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+  <database name="VIEW VENTAS_PORENTREGAR">
+    <view name="VENTAS_PORENTREGAR"><![CDATA[SELECT vhd.ventas_historial_desgloce_id AS ventas_porentregar_id, vhd.ad_client_id, vhd.ad_org_id, vhd.isactive, vhd.created, vhd.createdby, vhd.updated, vhd.updatedby, o.c_order_id, o.c_bpartner_id, vhd.m_product_id, vhd.m_attributesetinstance_id, vhd.c_invoice_id, vhd.qty, vhd.m_inoutline_id FROM ventas_historial_desgloce vhd JOIN ventas_ordline_detail oldd ON vhd.ventas_ordline_detail_id = oldd.ventas_ordline_detail_id JOIN c_orderline ol ON ol.c_orderline_id = oldd.c_orderline_id JOIN c_order o ON o.c_order_id = ol.c_order_id JOIN c_invoice i ON vhd.c_invoice_id = i.c_invoice_id AND i.docstatus = 'CO' WHERE vhd.m_inoutline_id IS NULL]]></view>
+  </database>

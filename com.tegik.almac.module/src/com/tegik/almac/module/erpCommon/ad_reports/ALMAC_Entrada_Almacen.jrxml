@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ALMAC_Entrada_Almacen" pageWidth="595" pageHeight="842" orientation="Landscape" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.3660269107301424"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50" isBold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18" isBold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14" isBold="true" pdfFontName="Times-Roman"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#ACC5D7"/>
+		</conditionalStyle>
+	</style>
+	<style name="table">
+		<box>
+			<pen lineWidth="1.0" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TH" mode="Opaque" backcolor="#A9A9A9">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_CH" mode="Opaque" backcolor="#FFBFBF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="table_TD" mode="Opaque" backcolor="#FFFFFF">
+		<box>
+			<pen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<subDataset name="Table Dataset 1"/>
+	<parameter name="BASE_WEB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/web"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="DOCUMENT_ID" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[SELECT ino.ad_org_id as org, ino.MovementDate AS Fecha,
+ino.DocumentNo AS DocNo,
+(SELECT COALESCE(DocumentNo) FROM C_Order WHERE C_Order_ID = ino.C_Order_ID) Pedido,
+wh.Name AS Almacen,
+org.Name AS Organizacion,
+COALESCE(oinfo.TaxID,'') AS OrgRFC,
+COALESCE(loc.Address1,'') AS OrgCalle,
+COALESCE(loc.Address2,'') AS OrgColonia,
+COALESCE(loc.Postal,'') AS OrgCP,
+COALESCE(loc.City,'') AS OrgCiudad,
+COALESCE(reg.Name,'') AS OrgEstado,
+COALESCE(ct.Name,'') AS OrgPais,
+COALESCE(bp.Name,'') AS BPartner,
+COALESCE(bp.TaxID,'') AS BPRFC,
+COALESCE(bloc.Address1,'') AS BPCalle,
+COALESCE(bloc.Address2,'') AS BPColonia,
+COALESCE(bloc.City,'') AS BPCiudad,
+COALESCE(breg.Name,'') AS BPEstado,
+COALESCE(bct.Name,'') AS BPPais,
+COALESCE(bloc.Postal,'') AS BPCP,
+COALESCE(bpl.Phone,'') AS BPTel
+FROM M_InOut ino
+INNER JOIN M_Warehouse wh on wh.M_Warehouse_ID = ino.M_Warehouse_ID
+INNER JOIN AD_Org org on ino.AD_Org_ID = org.AD_Org_ID
+INNER JOIN AD_OrgInfo oinfo on org.AD_Org_ID = oinfo.AD_Org_ID
+INNER JOIN AD_OrgInfo oi on oi.AD_Org_ID = org.AD_Org_ID
+INNER JOIN C_Location loc on loc.C_Location_ID = oi.C_Location_ID
+INNER JOIN C_Country ct on ct.C_Country_ID = loc.C_Country_ID
+INNER JOIN C_BPartner bp on bp.C_BPartner_ID = ino.C_BPartner_ID
+LEFT JOIN C_BPartner_Location bpl on bpl.C_BPartner_Location_ID = ino.Delivery_Location_ID
+LEFT JOIN C_Location bloc on bloc.C_Location_ID = bpl.C_Location_ID
+LEFT JOIN C_Country bct on bct.C_Country_ID = bloc.C_Country_ID
+LEFT JOIN C_Region reg on reg.C_Region_ID = loc.C_Region_ID
+LEFT JOIN C_Region breg on breg.C_Region_ID = bloc.C_Region_ID
+WHERE M_InOut_ID = $P{DOCUMENT_ID}]]>
+	</queryString>
+	<field name="org" class="java.lang.String"/>
+	<field name="fecha" class="java.sql.Timestamp"/>
+	<field name="docno" class="java.lang.String"/>
+	<field name="pedido" class="java.lang.String"/>
+	<field name="almacen" class="java.lang.String"/>
+	<field name="organizacion" class="java.lang.String"/>
+	<field name="orgrfc" class="java.lang.String"/>
+	<field name="orgcalle" class="java.lang.String"/>
+	<field name="orgcolonia" class="java.lang.String"/>
+	<field name="orgcp" class="java.lang.String"/>
+	<field name="orgciudad" class="java.lang.String"/>
+	<field name="orgestado" class="java.lang.String"/>
+	<field name="orgpais" class="java.lang.String"/>
+	<field name="bpartner" class="java.lang.String"/>
+	<field name="bprfc" class="java.lang.String"/>
+	<field name="bpcalle" class="java.lang.String"/>
+	<field name="bpcolonia" class="java.lang.String"/>
+	<field name="bpciudad" class="java.lang.String"/>
+	<field name="bpestado" class="java.lang.String"/>
+	<field name="bppais" class="java.lang.String"/>
+	<field name="bpcp" class="java.lang.String"/>
+	<field name="bptel" class="java.lang.String"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="279" splitType="Stretch">
+			<staticText>
+				<reportElement x="299" y="0" width="256" height="30" forecolor="#000000"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="24"/>
+				</textElement>
+				<text><![CDATA[Entrada almacén]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="101" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[new java.text.SimpleDateFormat("dd-MM-yyyy").format($F{fecha})]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="299" y="101" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Fecha:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="299" y="115" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No.  de Documento:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="299" y="129" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Pedido:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="299" y="143" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Almacen:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="115" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{docno}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="143" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{almacen}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="101" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{organizacion}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="115" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{orgrfc}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="129" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{orgcalle}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="143" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{orgcolonia}==null?" ":$F{orgcolonia}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="157" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{orgciudad}+' '+($F{orgestado}==null?' ':$F{orgestado})+' '+$F{orgpais}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement style="Column header" x="21" y="189" width="123" height="14" forecolor="#737373"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Enviar a:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="203" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{bpartner}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="217" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{bprfc}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="231" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{bpcalle}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="246" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{bpcolonia}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="21" y="260" width="149" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{bpciudad}+' '+$F{bpestado}+' '+$F{bppais}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement style="Detail" positionType="Float" x="422" y="129" width="133" height="14"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{pedido}]]></textFieldExpression>
+			</textField>
+			<image hAlign="Right" isUsingCache="true">
+				<reportElement x="0" y="0" width="170" height="91" isRemoveLineWhenBlank="true"/>
+				<imageExpression class="java.awt.Image"><![CDATA[org.openbravo.erpCommon.utility.Utility.showImageLogo("yourcompanydoc",$F{org})]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="26" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="4" y="15" width="551" height="2" forecolor="#5D5D5D" backcolor="#5D5D5D"/>
+			</frame>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="22" splitType="Stretch">
+			<frame>
+				<reportElement style="Row" mode="Opaque" x="0" y="0" width="551" height="4" forecolor="#000000"/>
+			</frame>
+			<subreport>
+				<reportElement x="0" y="4" width="551" height="10"/>
+				<subreportParameter name="DOCUMENT_ID">
+					<subreportParameterExpression><![CDATA[$P{DOCUMENT_ID}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression class="java.lang.String"><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/modules/com.tegik.almac.module/src/com/tegik/almac/module/erpCommon/ad_reports/ALMAC_Salida_Almacen_sub.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="78">
+			<frame>
+				<reportElement mode="Opaque" x="4" y="6" width="551" height="2" forecolor="#5D5D5D" backcolor="#5D5D5D"/>
+			</frame>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="37" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="170" height="37" forecolor="#5D5D5D" backcolor="#5D5D5D"/>
+				<textField evaluationTime="Report">
+					<reportElement style="Column header" x="74" y="7" width="62" height="20" forecolor="#FFFFFF"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="SansSerif" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<elementGroup/>
+				<textField>
+					<reportElement style="Column header" x="0" y="7" width="74" height="20" forecolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Monospaced" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Página "+$V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+	<noData>
+		<band height="50">
+			<staticText>
+				<reportElement style="Column header" x="0" y="20" width="555" height="30" forecolor="#010101"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No se encontrarón datos]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

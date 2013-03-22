@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_UPDATETRANSACTION">
+    <function name="ALMAC_UPDATETRANSACTION" type="NULL">
+      <parameter name="p_pinstance_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[CUR_TRANSACCIONES RECORD;
+  v_numtransaccion NUMBER;
+  v_totalTransacciones NUMBER;
+  
+  BEGIN
+
+
+
+  BEGIN --BODY
+  
+	
+	
+
+	DBMS_OUTPUT.PUT_LINE( 'COSA');
+    -- Read Information from Record
+
+
+v_numtransaccion = 1;
+	SELECT COUNT(*) INTO v_totalTransacciones FROM M_TRANSACTION WHERE AD_CLIENT_ID = '0BD13E24E0F94596B61414BD72225EB8' LIMIT 10;
+		DBMS_OUTPUT.PUT_LINE( 'TRANSACCION: ' || v_numtransaccion || " DE: " || v_totalTransacciones);
+
+
+	FOR CUR_TRANSACCIONES IN (SELECT M_TRANSACTION_ID FROM M_TRANSACTION WHERE AD_CLIENT_ID = '0BD13E24E0F94596B61414BD72225EB8' LIMIT 10)
+
+	LOOP
+		DBMS_OUTPUT.PUT_LINE( 'TRANSACCION: ' || v_numtransaccion || " DE: " || v_totalTransacciones);
+		UPDATE M_TRANSACTION SET ISACTIVE = ISACTIVE WHERE M_TRANSACTION_ID = CUR_TRANSACCIONES.M_TRANSACTION_ID;
+		v_numtransaccion = v_numtransaccion + 1;
+	END LOOP;  
+    RETURN;
+  END; --BODY
+EXCEPTION
+WHEN OTHERS THEN
+
+  RETURN;
+END ALMAC_UPDATETRANSACTION
+]]></body>
+    </function>
+  </database>

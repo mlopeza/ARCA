@@ -1,0 +1,362 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION VENTAS_PICKING">
+    <function name="VENTAS_PICKING" type="NULL">
+      <parameter name="p_order_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_saltarchk" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="regreso" type="VARCHAR" mode="out">
+        <default/>
+      </parameter>
+      <body><![CDATA[-- Logistice
+  v_ResultStr VARCHAR2(2000):='';
+  v_Message VARCHAR2(2000):='';
+  v_Record_ID VARCHAR2(32);
+  -- Parameter
+  TYPE RECORD IS REF CURSOR;
+   Cur_Parameter RECORD;
+  v_cantacum NUMBER;
+  v_qtyonhand NUMBER:=0;
+  v_test NUMBER;
+  v_storage_detail VARCHAR(32);
+  v_asi VARCHAR(32);
+  v_area NUMBER;
+  v_docstatus VARCHAR(60);
+  v_qtyonhandm2 NUMBER;
+  v_qtyres NUMBER;
+  v_qtysave NUMBER;
+  v_reserva NUMBER;
+  v_cantini NUMBER;
+  v_sacardealmacen VARCHAR(1);
+  BEGIN
+    --  Update AD_PInstance
+   
+  BEGIN --BODY
+    -- Get Parameters
+   
+regreso:='';
+
+SELECT docstatus INTO v_docstatus FROM c_order WHERE c_order_id=p_order_id;
+IF v_docstatus NOT IN ('CO','IP') THEN 
+	/*DELETE FROM ventas_ordline_detail 
+	WHERE c_orderline_id IN (SELECT c_orderline_id
+				FROM c_orderline 
+				WHERE c_order_id=p_order_id
+				);
+	*/
+	RETURN;
+END IF;
+
+v_test:=0;
+    FOR Cur_Parameter IN
+      (SELECT ol.* , p.em_dmprod_tileoslab, o.m_warehouse_id AS almacen_id
+      FROM c_orderline ol
+      INNER JOIN m_product p ON ol.m_product_id=p.m_product_id
+      INNER JOIN c_order o ON o.c_order_id=ol.c_order_id
+      WHERE ol.c_order_id=p_order_id
+      )
+    LOOP
+
+	IF p_saltarchk='Y' THEN
+		v_sacardealmacen='Y';
+	ELSE
+		v_sacardealmacen=Cur_Parameter.em_ventas_invpicking;
+	END IF;
+
+IF v_sacardealmacen = 'Y' THEN 
+    IF  Cur_Parameter.em_dmprod_tileoslab='Tile'  THEN
+    -------------
+    -----TILE----
+    -------------
+    
+	SELECT round(p.em_dmprod_height,8)*round(p.em_dmprod_width,8) INTO v_area
+	FROM m_product p WHERE p.m_product_id=Cur_Parameter.m_product_id ;
+	SELECT COALESCE(sum (qty),0) INTO v_cantini FROM ventas_ordline_detail WHERE c_orderline_id=Cur_Parameter.c_orderline_id;
+
+	    
+	v_cantacum:=round(Cur_Parameter.qtyordered/v_area-0.5,0)*v_area-v_cantini;--round((Cur_Parameter.qtyordered/v_area)-0.5,0);
+	v_qtyonhand:=0;
+	v_qtysave:=0;
+
+	WHILE v_cantacum >= v_area AND v_qtysave IS NOT NULL LOOP
+		
+		SELECT a.porsurtir, a.m_storage_detail_id,a.m_attributesetinstance_id, a.reserva  INTO  v_qtysave, v_storage_detail, v_asi, v_reserva  
+		FROM		
+		(
+		SELECT 
+		CASE WHEN A2.disponible<= v_cantacum THEN A2.disponible
+		ELSE  v_cantacum
+		END
+		AS porsurtir, 
+		A2.m_storage_detail_id,A2.m_attributesetinstance_id, A2.reserva 
+		 FROM 
+		(SELECT A1.inventario-A1.reserva AS disponible,A1.m_storage_detail_id,A1.m_attributesetinstance_id, A1.reserva 
+		FROM 
+			(SELECT 
+			COALESCE(round((
+			((SELECT sum(olid.qty
+					-
+						COALESCE((SELECT SUM(vhd.qty)
+						FROM ventas_historial_desgloce vhd
+						WHERE vhd.ventas_ordline_detail_id=olid.ventas_ordline_detail_id
+						AND vhd.m_inoutline_id IS NOT NULL
+						),0)			
+					) 
+			FROM ventas_ordline_detail olid
+			INNER JOIN c_orderline ol ON ol.c_orderline_id=olid.c_orderline_id
+			INNER JOIN c_order o ON o.c_order_id=ol.c_order_id
+			WHERE olid.m_attributesetinstance_id=sd.m_attributesetinstance_id
+			AND o.m_warehouse_id=Cur_Parameter.almacen_id))
+			/v_area)-0.5,0)*v_area,0) AS reserva,
+	
+			round(sd.qtyonhand/v_area-0.5,0)*v_area AS inventario, sd.m_storage_detail_id, sd.m_attributesetinstance_id  
+			FROM m_storage_detail sd
+			LEFT JOIN m_inoutline iol ON  sd.m_attributesetinstance_id = iol.m_attributesetinstance_id 
+							AND sd.m_product_id=Cur_Parameter.m_product_id 
+			LEFT JOIN m_inout io ON iol.m_inout_id=io.m_inout_id
+
+			WHERE sd.m_product_id=Cur_Parameter.m_product_id 
+				AND sd.m_attributesetinstance_id NOT IN (SELECT olid.m_attributesetinstance_id 
+								   FROM ventas_ordline_detail olid
+								 INNER JOIN c_orderline ol2 ON  olid.c_orderline_id=ol2.c_orderline_id
+								 INNER JOIN c_order o2 ON ol2.c_order_id=o2.c_order_id 
+											AND o2.docstatus IN ('CO','IP') 
+											
+								  WHERE olid.m_attributesetinstance_id IS NOT NULL
+								   )
+				
+				AND sd.qtyonhand>0
+				AND sd.m_locator_id IN (SELECT m_locator_id FROM m_locator 
+							WHERE m_warehouse_id=Cur_Parameter.almacen_id)
+				AND COALESCE(io.docstatus, 'CO') ='CO'
+			ORDER BY io.movementdate DESC ) A1
+		)A2
+		
+		WHERE A2.disponible > 0 
+		) a
+		INNER JOIN m_attributesetinstance asi ON asi.m_attributesetinstance_id=a.m_attributesetinstance_id
+		ORDER BY asi.em_almac_fechaentrada DESC, porsurtir 
+		LIMIT 1;
+
+		/*SELECT 
+		CASE WHEN A2.disponible<= v_cantacum THEN A2.disponible
+		ELSE  v_cantacum
+		END
+		AS porsurtir,
+		A2.m_storage_detail_id,A2.m_attributesetinstance_id, A2.reserva 
+		 FROM 
+		(SELECT A1.inventario-A1.reserva AS disponible,A1.m_storage_detail_id,A1.m_attributesetinstance_id, A1.reserva 
+		FROM 
+			(SELECT 
+			COALESCE(round((
+			((SELECT sum(olid.qty
+					-
+						COALESCE((SELECT SUM(vhd.qty)
+						FROM ventas_historial_desgloce vhd
+						WHERE vhd.ventas_ordline_detail_id=olid.ventas_ordline_detail_id
+						AND vhd.m_inoutline_id IS NOT NULL
+						),0)			
+					) 
+			FROM ventas_ordline_detail olid
+			INNER JOIN c_orderline ol ON ol.c_orderline_id=olid.c_orderline_id
+			INNER JOIN c_order o ON o.c_order_id=ol.c_order_id
+			WHERE olid.m_attributesetinstance_id=sd.m_attributesetinstance_id
+			AND o.m_warehouse_id=Cur_Parameter.almacen_id))
+			/v_area)-0.5,0)*v_area,0) AS reserva,
+	
+			round(sd.qtyonhand/v_area-0.5,0)*v_area AS inventario, sd.m_storage_detail_id, sd.m_attributesetinstance_id  
+			FROM m_storage_detail sd
+			LEFT JOIN m_inoutline iol ON  sd.m_attributesetinstance_id = iol.m_attributesetinstance_id 
+							AND sd.m_product_id=Cur_Parameter.m_product_id
+			LEFT JOIN m_inout io ON iol.m_inout_id=io.m_inout_id
+
+			WHERE sd.m_product_id=Cur_Parameter.m_product_id 
+				AND sd.m_attributesetinstance_id NOT IN (SELECT olid.m_attributesetinstance_id 
+								   FROM ventas_ordline_detail olid
+								 INNER JOIN c_orderline ol2 ON  olid.c_orderline_id=ol2.c_orderline_id
+								 INNER JOIN c_order o2 ON ol2.c_order_id=o2.c_order_id 
+											AND o2.docstatus IN ('CO','IP')  AND O2.C_ORDER_ID =P_ORDER_ID
+											
+								  WHERE olid.m_attributesetinstance_id IS NOT NULL
+								   )
+				
+				AND sd.qtyonhand>0
+				AND sd.m_locator_id IN (SELECT m_locator_id FROM m_locator 
+							WHERE m_warehouse_id=Cur_Parameter.almacen_id)
+				AND COALESCE(io.docstatus, 'CO') ='CO'
+			ORDER BY io.movementdate DESC ) A1
+		)A2
+		
+		
+		INTO  v_qtysave, v_storage_detail, v_asi, v_reserva 
+		WHERE A2.disponible > 0 
+		LIMIT 1;
+
+*/
+
+--RAISE EXCEPTION '%','sd:'||v_storage_detail||'acm:'||round(v_cantacum,2)||' asi:'||v_asi||' p:'||Cur_Parameter.m_product_id ||' wh:'||Cur_Parameter.almacen_id
+--||' qtysv:'||round(v_qtysave,2)||' area:'||round(v_area,2)||' reserva:'||round(v_reserva,2);
+
+DBMS_OUTPUT.PUT_LINE('v_storage_detail:'||v_storage_detail||'v_cantacum:'||v_cantacum||' v_asi:'||v_asi||' m_product_id:'||Cur_Parameter.m_product_id ||' wh:'||Cur_Parameter.almacen_id);
+DBMS_OUTPUT.PUT_LINE('v_cantacum:'||v_cantacum||' v_qtysave:'||v_qtysave||' v_area:'||v_area||'v_cantacum/v_area:'||v_cantacum/v_area||' reserva:'||v_reserva);
+DBMS_OUTPUT.PUT_LINE('=====================================================================');
+
+	IF v_qtysave IS NOT NULL THEN	
+
+		--VERIFICAR CUANTAS PIEZAS DEL HUACAL SE ENCUANTRAN SEPARADAS
+		/*SELECT sum(olid.qty) INTO v_qtyres FROM ventas_ordline_detail olid
+		WHERE olid.m_attributesetinstance_id=v_asi;
+		v_qtyonhandm2:=v_qtyonhand-v_qtyres;
+		IF v_qtyonhandm2<= v_cantacum THEN
+			v_qtysave:=round((v_qtyonhandm2/v_area)-0.5,0)*v_area;
+		ELSE
+			v_qtysave:=round((v_cantacum/v_area)-0.5,0)*v_area;
+		END IF;
+		*/
+		--END VERIFICAR CUANTAS PIEZAS DEL HUACAL SE ENCUANTRAN SEPARADAS
+		
+		IF v_qtysave>0 THEN
+		/*INSERT INTO ventas_ordline_detail(
+				    ventas_ordline_detail_id, 
+				    ad_client_id, 
+				    ad_org_id, 
+				    isactive, 
+				    facturado, 
+				    createdby, 
+				    updatedby, 
+				    description, 
+				    m_storage_detail_id, 
+				    c_orderline_id, 
+				    qty, 
+				    m_attributesetinstance_id, 
+				    qty_facturar, 
+				    qty_facturado, 
+				    atributo)
+			    VALUES (
+				    GET_UUID(),--ventas_ordline_detail_id, 
+				    Cur_Parameter.ad_client_id, 
+				    Cur_Parameter.ad_org_id, 
+				    Cur_Parameter.isactive, 
+				    'N',--facturado, 
+				    Cur_Parameter.createdby, 
+				    Cur_Parameter.updatedby, 
+				    '',--description, 
+				    v_storage_detail,--m_storage_detail_id, 
+				    Cur_Parameter.c_orderline_id, 
+				    v_qtysave,--qty, 
+				    v_asi,--m_attributesetinstance_id, 
+				    v_qtysave,--qty_facturar, 
+				    0,--qty_facturado, 
+				    NULL--atributo
+				    );*/
+		v_cantacum:=v_cantacum-v_qtysave;
+		END IF;--v_qtyonhandm2>0 
+	END IF;	--v_qtyonhand is null
+
+    END LOOP;
+    -------------
+    ---END TILE--
+    -------------
+    ELSE
+    -------------
+    -----SLAB----
+    -------------
+    
+    SELECT COALESCE(sum (qty),0) INTO v_cantini FROM ventas_ordline_detail WHERE c_orderline_id=Cur_Parameter.c_orderline_id;
+    
+	v_cantacum:=Cur_Parameter.qtyordered-v_cantini;
+
+	v_qtyonhand:=0;
+	 WHILE v_qtyonhand IS NOT NULL LOOP
+	 
+		SELECT sd.qtyonhand, sd.m_storage_detail_id, sd.m_attributesetinstance_id  
+		INTO v_qtyonhand, v_storage_detail, v_asi
+		FROM m_storage_detail sd
+		INNER JOIN m_attributesetinstance asi ON sd.m_attributesetinstance_id=asi.m_attributesetinstance_id
+		WHERE sd.m_product_id=Cur_Parameter.m_product_id 
+			AND sd.qtyonhand<=v_cantacum
+			AND sd.qtyonhand>0
+			AND sd.m_locator_id IN (SELECT m_locator_id FROM m_locator 
+						WHERE m_warehouse_id=Cur_Parameter.almacen_id)
+
+			AND sd.m_attributesetinstance_id NOT IN (SELECT olid.m_attributesetinstance_id 
+								   FROM ventas_ordline_detail olid
+								 INNER JOIN c_orderline ol2 ON  olid.c_orderline_id=ol2.c_orderline_id
+											--AND ol2.c_orderline_id=Cur_Parameter.c_orderline_id
+								 INNER JOIN c_order o2 ON ol2.c_order_id=o2.c_order_id 
+											AND o2.docstatus IN ('CO','IP') AND olid.m_attributesetinstance_id IS NOT NULL
+								   )
+		ORDER BY asi.em_almac_fechaentrada DESC, sd.qtyonhand DESC LIMIT 1;
+
+
+
+			
+		IF v_qtyonhand IS NOT NULL THEN
+		DBMS_OUTPUT.PUT_LINE('v_storage_detail:'||v_storage_detail||' v_asi:'||v_asi||' m_product_id:'||Cur_Parameter.m_product_id ||' m_warehouse_id:'||Cur_Parameter.almacen_id);
+DBMS_OUTPUT.PUT_LINE('v_cantacum:'||v_cantacum||' v_qtyonhand:'||v_qtyonhand);
+DBMS_OUTPUT.PUT_LINE('=====================================================================');
+			/*INSERT INTO ventas_ordline_detail(
+				    ventas_ordline_detail_id, 
+				    ad_client_id, 
+				    ad_org_id, 
+				    isactive, 
+				    facturado, 
+				    createdby, 
+				    updatedby, 
+				    description, 
+				    m_storage_detail_id, 
+				    c_orderline_id, 
+				    qty, 
+				    m_attributesetinstance_id, 
+				    qty_facturar, 
+				    qty_facturado, 
+				    atributo)
+			    VALUES (
+				    GET_UUID(),--ventas_ordline_detail_id, 
+				    Cur_Parameter.ad_client_id, 
+				    Cur_Parameter.ad_org_id, 
+				    Cur_Parameter.isactive, 
+				    'N',--facturado, 
+				    Cur_Parameter.createdby, 
+				    Cur_Parameter.updatedby, 
+				    '',--description, 
+				    v_storage_detail,--m_storage_detail_id, 
+				    Cur_Parameter.c_orderline_id, 
+				    v_qtyonhand,--qty, 
+				    v_asi,--m_attributesetinstance_id, 
+				    v_qtyonhand,--qty_facturar, 
+				    0,--qty_facturado, 
+				    NULL--atributo
+				    );*/
+
+			v_cantacum:=v_cantacum-v_qtyonhand;
+		END IF;
+	END LOOP;
+	--UNTIL v_qtyonhand IS NULL END REPEAT;
+    -------------
+    ---END SLAB--
+    -------------
+    END IF;
+
+    
+   END IF;--IF v_sacardealmacen = 'Y' THEN 
+    END LOOP;
+
+
+
+     
+    RETURN;
+  END; --BODY
+EXCEPTION
+WHEN OTHERS THEN
+  v_ResultStr:= 'Error en la generación del detalle: ' || SQLERRM;
+  DBMS_OUTPUT.PUT_LINE(v_ResultStr) ;
+  ROLLBACK;
+ regreso:=v_ResultStr;
+  RETURN;
+END VENTAS_PICKING
+]]></body>
+    </function>
+  </database>

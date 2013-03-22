@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER COMPRA_ORDER_TRG">
+    <trigger name="COMPRA_ORDER_TRG" table="C_ORDER" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[v_pricelist VARCHAR(32);
+v_isNacional VARCHAR(1);
+v_Cuenta NUMBER;
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+  IF (TG_OP <> 'DELETE') THEN
+	SELECT EM_COMPRA_ISNACIONAL INTO v_isNacional FROM C_DOCTYPE WHERE C_DOCTYPE_ID = :NEW.C_DOCTYPETARGET_ID;
+	:NEW.EM_COMPRA_ISNACIONAL = v_isNacional;
+  END IF;
+  
+END COMPRA_ORDER_TRG
+]]></body>
+    </trigger>
+  </database>

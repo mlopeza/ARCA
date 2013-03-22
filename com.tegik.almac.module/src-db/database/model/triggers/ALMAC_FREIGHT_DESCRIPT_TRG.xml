@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_FREIGHT_DESCRIPT_TRG">
+    <trigger name="ALMAC_FREIGHT_DESCRIPT_TRG" table="M_FREIGHT" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[v_temp VARCHAR2(255);
+v_c1 VARCHAR2(60);
+v_c2 VARCHAR2(60);
+v_reg1 VARCHAR2(60);
+v_reg2 VARCHAR2(60);
+v_city1 VARCHAR2(60);
+v_city2 VARCHAR2(60);
+BEGIN
+
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+  IF(INSERTING OR UPDATING) THEN
+        --Busca la Informacion de la ruta
+      SELECT COALESCE(name,'ND') into v_c1 from c_country_trl where c_country_id = :NEW.c_country_id;
+      SELECT COALESCE(name,'ND') into v_c2 from c_country_trl where c_country_id = :NEW.c_country_id;
+      SELECT COALESCE(name,'ND') into v_reg1 from c_region where c_region_id = :NEW.c_region_id;
+      SELECT COALESCE(name,'ND') into v_reg2 from c_region where c_region_id = :NEW.c_region_id;
+      SELECT COALESCE(name,'ND') into v_city1 from c_city where c_city_id = :NEW.em_almac_c_city_id;
+      SELECT COALESCE(name,'ND') into v_city2 from c_city where c_city_id = :NEW.em_almac_to_c_city_id;
+	
+      --Concatena toda la información
+      v_temp = v_c1||','||v_reg1||','||v_city1||' - '||v_c2||','||v_reg2||','||v_city2||'   ('||:NEW.freightamt ||')';
+	:NEW.em_almac_description = v_temp;
+  END IF;
+IF DELETING THEN RETURN OLD; ELSE RETURN NEW; END IF;
+END ALMAC_FREIGHT_DESCRIPT_TRG
+]]></body>
+    </trigger>
+  </database>

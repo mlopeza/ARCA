@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_ML_LOCATOR_TRG">
+    <trigger name="ALMAC_ML_LOCATOR_TRG" table="M_MOVEMENTLINE" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[
+CUR_MOVEMENT RECORD;
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+	SELECT PROCESSED, EM_ALMAC_LOCATOR_ID, EM_ALMAC_LOCATORTO_ID INTO CUR_MOVEMENT FROM M_MOVEMENT WHERE M_MOVEMENT_ID = :NEW.M_MOVEMENT_ID;
+
+	IF (CUR_MOVEMENT.PROCESSED = 'N') THEN
+		:NEW.M_LOCATOR_ID = CUR_MOVEMENT.EM_ALMAC_LOCATOR_ID;
+		:NEW.M_LOCATORTO_ID = CUR_MOVEMENT.EM_ALMAC_LOCATORTO_ID;
+	END IF;
+  
+END ALMAC_ML_LOCATOR_TRG
+]]></body>
+    </trigger>
+  </database>

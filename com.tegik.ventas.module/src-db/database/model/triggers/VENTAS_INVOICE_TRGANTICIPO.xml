@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_INVOICE_TRGANTICIPO">
+    <trigger name="VENTAS_INVOICE_TRGANTICIPO" table="C_INVOICE" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[ v_monedaOrden VARCHAR(32);
+ v_isanticipo VARCHAR(1);
+ v_totalOrden NUMBER;
+v_cuentaCanceladas NUMBER;
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+  SELECT EM_VENTAS_ISANTICIPO INTO v_isanticipo FROM C_DOCTYPE WHERE C_DOCTYPE_ID = :NEW.C_DOCTYPETARGET_ID;
+
+  IF (v_isanticipo = 'Y') THEN
+	
+	SELECT GRANDTOTAL, C_CURRENCY_ID INTO v_totalOrden, v_monedaOrden FROM C_ORDER WHERE C_ORDER_ID = :NEW.EM_VENTAS_ORDANTICIPO_ID;
+	
+	IF (v_monedaOrden = :NEW.C_CURRENCY_ID) THEN
+		:NEW.EM_VENTAS_TCANTICIPO = 1;
+	END IF;
+	
+	IF (:NEW.EM_VENTAS_TIPOANTICIPO = 'P') THEN
+		:NEW.EM_VENTAS_MONTOANTICIPO = v_totalOrden * (COALESCE(:NEW.EM_VENTAS_PORCANTICIPO, 0)/100) * :NEW.EM_VENTAS_TCANTICIPO;
+	END IF;
+	
+	IF (:NEW.EM_VENTAS_TIPOANTICIPO = 'M') THEN
+		IF (:NEW.EM_VENTAS_TCANTICIPO * v_totalOrden=0)THEN
+			:NEW.EM_VENTAS_PORCANTICIPO :=0;
+		ELSE
+			:NEW.EM_VENTAS_PORCANTICIPO = (:NEW.EM_VENTAS_MONTOANTICIPO / (:NEW.EM_VENTAS_TCANTICIPO * v_totalOrden)) * 100;	
+		END IF;
+	END IF;
+	
+	IF (:NEW.DOCSTATUS = 'CO') THEN
+		SELECT COUNT(*) INTO v_cuentaCanceladas FROM C_INVOICE_REVERSE WHERE C_INVOICE_ID = :NEW.C_INVOICE_ID;
+		IF (v_cuentaCanceladas > 0) THEN
+			IF (ROUND(:NEW.EM_VENTAS_MONTOANTICIPO,1) <> ROUND(:NEW.GRANDTOTAL,1)) THEN
+				RAISE_APPLICATION_ERROR(-20000, 'El monto de la factura (' || ROUND(:NEW.GRANDTOTAL,1) || '). No corresponde con el monto del anticipo (' || ROUND(:NEW.EM_VENTAS_MONTOANTICIPO,1) || ')');
+				RETURN OLD;
+			END IF;
+		END IF;
+	END IF;
+	
+  END IF;
+  
+END VENTAS_INVOICE_TRGANTICIPO
+]]></body>
+    </trigger>
+  </database>

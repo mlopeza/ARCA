@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_ORDER_TRGSTATUS">
+    <trigger name="VENTAS_ORDER_TRGSTATUS" table="C_ORDER" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[
+v_subdoc VARCHAR(32);
+
+BEGIN
+    
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+
+    IF (:NEW.DOCSTATUS IN ('IP', 'DR')) THEN 
+	SELECT DOCSUBTYPESO INTO v_subdoc FROM C_DOCTYPE WHERE C_DOCTYPE_ID = :NEW.C_DOCTYPETARGET_ID;
+	IF v_subdoc = 'OB' THEN
+		--NEW.EM_VENTAS_ALERTSTATUS = 'NU';
+	ELSE
+		:NEW.EM_VENTAS_ALERTSTATUS = 'CP';
+	END IF;
+	
+    END IF;
+   
+END VENTAS_ORDER_TRGSTATUS
+]]></body>
+    </trigger>
+  </database>

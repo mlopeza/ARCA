@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION COMPRA_CALCULA_STATUS">
+    <function name="COMPRA_CALCULA_STATUS" type="NULL">
+      <parameter name="p_statusc" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_statuse" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="r_status" type="VARCHAR" mode="out">
+        <default/>
+      </parameter>
+      <body><![CDATA[BEGIN  
+
+IF p_statusc='Solicitado' OR p_statusc='En producción' THEN
+r_status:=p_statusc;
+RETURN; 
+END IF;
+
+IF p_statusc='Cargado en planta' AND p_statuse IS NULL THEN
+r_status:=p_statusc;
+RETURN; 
+ELSE 
+r_status:=p_statuse;
+RETURN;
+END IF;
+
+r_status:='Error'
+RETURN;
+END COMPRA_CALCULA_STATUS
+]]></body>
+    </function>
+  </database>

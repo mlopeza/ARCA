@@ -1,0 +1,360 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION PROD_PROCESARCORTE">
+    <function name="PROD_PROCESARCORTE" type="NULL">
+      <parameter name="p_pinstance_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[-- Logistice
+  v_ResultStr VARCHAR2(2000):='';
+  v_Message VARCHAR2(2000):='';
+  v_Record_ID VARCHAR2(32);
+  -- Parameter
+  TYPE RECORD IS REF CURSOR;
+    Cur_Parameter RECORD;
+    Cur_Production RECORD;
+    Cur_Product RECORD;
+    Cur_ProductIN RECORD;
+    Cur_PInstance RECORD;
+    -- Parameter Variables
+    FINISH_PROCESS BOOLEAN:=false;
+    v_cuenta NUMBER;
+    v_defaultexists NUMBER;
+    v_pline NUMBER;
+    v_productionplan_id VARCHAR(32);
+    v_dproductionplan_id VARCHAR(32);
+    v_message_cost VARCHAR (255);
+    v_message_run VARCHAR (255);
+    v_wpdummy VARCHAR (32);
+    v_wpreal VARCHAR (32);
+    v_dummyproduct_id VARCHAR(32);
+	
+  BEGIN
+    --  Update AD_PInstance
+    DBMS_OUTPUT.PUT_LINE('Updating PInstance - Processing ' || p_PInstance_ID) ;
+    v_ResultStr:='PInstanceNotFound';
+    AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'Y', NULL, NULL) ;
+  BEGIN --BODY
+    -- Get Parameters
+    v_ResultStr:='ReadingParameters';
+    FOR Cur_Parameter IN
+      (SELECT i.Record_ID,
+        p.ParameterName,
+        p.P_String,
+        p.P_Number,
+        p.P_Date
+      FROM AD_PInstance i
+      LEFT JOIN AD_PInstance_Para p
+        ON i.AD_PInstance_ID=p.AD_PInstance_ID
+      WHERE i.AD_PInstance_ID=p_PInstance_ID
+      ORDER BY p.SeqNo
+      )
+    LOOP
+      v_Record_ID:=Cur_Parameter.Record_ID;
+    END LOOP; -- Get Parameter
+    -- Read Information from Record
+    v_ResultStr:='Reading Record';
+
+SELECT m_product_id INTO v_dummyproduct_id FROM m_product WHERE ispurchased='N' AND issold='N' AND production='Y' LIMIT 1;
+IF v_dummyproduct_id IS NULL THEN
+	 RAISE_APPLICATION_ERROR(-20000, 'Debe existir un producto de producción que no sea de compra/venta') ;
+END IF;
+ 
+SELECT m_production_id, ad_client_id, ad_org_id, isactive, created, 
+       createdby, updated, updatedby, "name", description, movementdate, 
+       iscreated, posted, processed, processing, ad_orgtrx_id, c_project_id, 
+       c_campaign_id, c_activity_id, user1_id, user2_id, documentno, 
+       endtime, issotrx, starttime, validating, em_prod_issubcontract, 
+       em_prod_costoutsource, em_prod_completarcorte, em_prod_generarcostos INTO Cur_Production 
+       FROM m_production WHERE m_production_id=v_Record_ID LIMIT 1;
+
+ SELECT ma_wrphase_id INTO v_wpreal FROM ma_wrphase wp
+ INNER JOIN ma_workrequirement wr ON wp.ma_workrequirement_id=wr.ma_workrequirement_id
+ WHERE wp.em_prod_tipo='R'AND wr.em_prod_isdefault='Y' LIMIT 1 ;
+IF v_wpreal IS NULL THEN
+	RAISE_APPLICATION_ERROR(-20000, 'Debe existir una órden de fabricación por defecto con una fase real') ;
+END IF;
+ 
+ SELECT ma_wrphase_id INTO v_wpdummy FROM ma_wrphase wp
+ INNER JOIN ma_workrequirement wr ON wp.ma_workrequirement_id=wr.ma_workrequirement_id
+ WHERE wp.em_prod_tipo='D'AND wr.em_prod_isdefault='Y' LIMIT 1 ;
+ IF v_wpdummy IS NULL THEN
+	RAISE_APPLICATION_ERROR(-20000, 'Debe existir una órden de fabricación por defecto con una fase dummy') ;
+END IF;
+----------------------
+--TRANSFORMACION DUMMY
+----------------------
+v_dproductionplan_id:=GET_UUID();
+ INSERT INTO m_productionplan(
+            m_productionplan_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, m_production_id, line, m_product_id, 
+            productionqty, m_locator_id, description, conversionrate, ma_costcenteruse, 
+            ma_wrphase_id, neededquantity, processed, rejectedquantity, secondaryqty, 
+            secondaryunit, usedmaterial, calccost, ma_costcenter_version_id, 
+            outsourced)
+    VALUES (v_dproductionplan_id,--m_productionplan_id, 
+	    Cur_Production.ad_client_id, 
+	    Cur_Production.ad_org_id, 
+	    Cur_Production.isactive, 
+	    now(),--created,
+	    Cur_Production.createdby, 
+	    now(),--updated,
+	    Cur_Production.updatedby, 
+	    Cur_Production.m_production_id, 
+	    '10',--line, 
+	    NULL,--m_product_id,
+	    0,--productionqty, 
+	    NULL,--m_locator_id, 
+	    '',--description, 
+	    NULL,--conversionrate, 
+	    NULL,--ma_costcenteruse,
+	    v_wpdummy,--ma_wrphase_id, 
+	    NULL,--neededquantity, 
+	    'Y',--processed, 
+	    NULL,--rejectedquantity, 
+	    NULL,--secondaryqty,
+	    NULL,--secondaryunit, 
+	    NULL,--usedmaterial, 
+	    NULL,--calccost, 
+	    NULL,--ma_costcenter_version_id, 
+	    Cur_Production.em_prod_issubcontract--outsourced
+	    );
+
+      SELECT prod_productos_id, ad_client_id, ad_org_id, isactive, created, 
+       createdby, updated, updatedby, m_production_id, m_product_id, 
+       movementqty, m_locator_id, description, m_attributesetinstance_id, 
+       m_product_uom_id, quantityorder, c_uom_id, productiontype, rejectedquantity, 
+       alto, ancho, tipoproducto INTO Cur_ProductIN
+      FROM prod_productos WHERE m_production_id=Cur_Production.m_production_id
+      AND productiontype='-' LIMIT 1;	
+    v_pline:=0;
+    v_pline:=v_pline+10;
+    INSERT INTO m_productionline(
+	    m_productionline_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, m_productionplan_id, line, m_product_id, 
+            movementqty, m_locator_id, description, m_attributesetinstance_id, 
+            m_product_uom_id, quantityorder, c_uom_id, calculated, productiontype, 
+            rejectedquantity, calccost, componentcost, em_almac_asi_id, em_prod_timespent, 
+            em_prod_costsubcontract)
+    VALUES (GET_UUID(),--m_productionline_id, 
+		Cur_ProductIN.ad_client_id, 
+		Cur_ProductIN.ad_org_id, 
+		Cur_ProductIN.isactive, 
+		now(),--created, 
+		Cur_ProductIN.createdby, 
+		now(),--updated, 
+		Cur_ProductIN.updatedby, 
+		v_dproductionplan_id,--m_productionplan_id, 
+		v_pline,--line, 
+		Cur_ProductIN.m_product_id ,
+		Cur_ProductIN.movementqty, 
+		Cur_ProductIN.m_locator_id, 
+		Cur_ProductIN.description, 
+		Cur_ProductIN.m_attributesetinstance_id, 
+		Cur_ProductIN.m_product_uom_id, 
+		Cur_ProductIN.quantityorder, 
+		Cur_ProductIN.c_uom_id, 
+		NULL,--calculated,
+		Cur_ProductIN.productiontype, 
+		Cur_ProductIN.rejectedquantity, 
+		0,--calccost, 
+		0,--componentcost, 
+		NULL,--em_almac_asi_id, 
+		NULL,--em_prod_timespent, 
+		NULL--em_prod_costsubcontract
+		);
+
+    v_pline:=v_pline+10;
+    
+    INSERT INTO m_productionline(
+	    m_productionline_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, m_productionplan_id, line, m_product_id, 
+            movementqty, m_locator_id, description, m_attributesetinstance_id, 
+            m_product_uom_id, quantityorder, c_uom_id, calculated, productiontype, 
+            rejectedquantity, calccost, componentcost, em_almac_asi_id, em_prod_timespent, 
+            em_prod_costsubcontract)
+    VALUES (GET_UUID(),--m_productionline_id, 
+		Cur_Production.ad_client_id, 
+		Cur_Production.ad_org_id, 
+		Cur_Production.isactive, 
+		now(),--created, 
+		Cur_Production.createdby, 
+		now(),--updated, 
+		Cur_Production.updatedby, 
+		v_dproductionplan_id,--m_productionplan_id, 
+		v_pline,--line, 
+		v_dummyproduct_id ,
+		Cur_ProductIN.movementqty, 
+		Cur_ProductIN.m_locator_id, 
+		'DUMMY',--description, 
+		NULL,--m_attributesetinstance_id, 
+		Cur_ProductIN.m_product_uom_id, 
+		Cur_ProductIN.quantityorder, 
+		Cur_ProductIN.c_uom_id, 
+		NULL,--calculated,
+		'+', 
+		0,--rejectedquantity, 
+		0,--calccost, 
+		0,--componentcost, 
+		NULL,--em_almac_asi_id, 
+		NULL,--em_prod_timespent, 
+		NULL--em_prod_costsubcontract
+		);
+---------------------
+--TRANSFORMACION REAL
+---------------------      
+v_productionplan_id:=GET_UUID();
+   INSERT INTO m_productionplan(
+            m_productionplan_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, m_production_id, line, m_product_id, 
+            productionqty, m_locator_id, description, conversionrate, ma_costcenteruse, 
+            ma_wrphase_id, neededquantity, processed, rejectedquantity, secondaryqty, 
+            secondaryunit, usedmaterial, calccost, ma_costcenter_version_id, 
+            outsourced)
+    VALUES (v_productionplan_id,--m_productionplan_id, 
+	    Cur_Production.ad_client_id, 
+	    Cur_Production.ad_org_id, 
+	    Cur_Production.isactive, 
+	    now(),--created,
+	    Cur_Production.createdby, 
+	    now(),--updated,
+	    Cur_Production.updatedby, 
+	    Cur_Production.m_production_id, 
+	    '20',--line, 
+	    NULL,--m_product_id,
+	    0,--productionqty, 
+	    NULL,--m_locator_id, 
+	    '',--description, 
+	    NULL,--conversionrate, 
+	    NULL,--ma_costcenteruse,
+	    v_wpreal,--ma_wrphase_id, 
+	    NULL,--neededquantity, 
+	    'Y',--processed, 
+	    NULL,--rejectedquantity, 
+	    NULL,--secondaryqty,
+	    NULL,--secondaryunit, 
+	    NULL,--usedmaterial, 
+	    NULL,--calccost, 
+	    NULL,--ma_costcenter_version_id, 
+	    Cur_Production.em_prod_issubcontract--outsourced
+	    );
+v_pline:=0;
+    v_pline:=v_pline+10;
+    
+    INSERT INTO m_productionline(
+	    m_productionline_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, m_productionplan_id, line, m_product_id, 
+            movementqty, m_locator_id, description, m_attributesetinstance_id, 
+            m_product_uom_id, quantityorder, c_uom_id, calculated, productiontype, 
+            rejectedquantity, calccost, componentcost, em_almac_asi_id, em_prod_timespent, 
+            em_prod_costsubcontract)
+    VALUES (GET_UUID(),--m_productionline_id, 
+		Cur_Production.ad_client_id, 
+		Cur_Production.ad_org_id, 
+		Cur_Production.isactive, 
+		now(),--created, 
+		Cur_Production.createdby, 
+		now(),--updated, 
+		Cur_Production.updatedby, 
+		v_productionplan_id,--m_productionplan_id, 
+		v_pline,--line, 
+		v_dummyproduct_id ,
+		Cur_ProductIN.movementqty, 
+		Cur_ProductIN.m_locator_id, 
+		'DUMMY',--description, 
+		NULL,--m_attributesetinstance_id, 
+		Cur_ProductIN.m_product_uom_id, 
+		Cur_ProductIN.quantityorder, 
+		Cur_ProductIN.c_uom_id, 
+		NULL,--calculated,
+		'-', 
+		0,--rejectedquantity, 
+		0,--calccost, 
+		0,--componentcost, 
+		NULL,--em_almac_asi_id, 
+		NULL,--em_prod_timespent, 
+		NULL--em_prod_costsubcontract
+		);
+FOR Cur_Product IN
+      (SELECT prod_productos_id, ad_client_id, ad_org_id, isactive, created, 
+       createdby, updated, updatedby, m_production_id, m_product_id, 
+       movementqty, m_locator_id, description, m_attributesetinstance_id, 
+       m_product_uom_id, quantityorder, c_uom_id, productiontype, rejectedquantity, 
+       alto, ancho, tipoproducto
+      FROM prod_productos WHERE m_production_id=Cur_Production.m_production_id
+      AND productiontype='+'
+      )
+    LOOP
+    v_pline:=v_pline+10;
+      INSERT INTO m_productionline(
+	    m_productionline_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, m_productionplan_id, line, m_product_id, 
+            movementqty, m_locator_id, description, m_attributesetinstance_id, 
+            m_product_uom_id, quantityorder, c_uom_id, calculated, productiontype, 
+            rejectedquantity, calccost, componentcost, em_almac_asi_id, em_prod_timespent, 
+            em_prod_costsubcontract)
+    VALUES (GET_UUID(),--m_productionline_id, 
+		Cur_Product.ad_client_id, 
+		Cur_Product.ad_org_id, 
+		Cur_Product.isactive, 
+		now(),--created, 
+		Cur_Product.createdby, 
+		now(),--updated, 
+		Cur_Product.updatedby, 
+		v_productionplan_id,--m_productionplan_id, 
+		v_pline,--line, 
+		Cur_Product.m_product_id ,
+		Cur_Product.movementqty, 
+		Cur_Product.m_locator_id, 
+		Cur_Product.description, 
+		Cur_Product.m_attributesetinstance_id, 
+		Cur_Product.m_product_uom_id, 
+		Cur_Product.quantityorder, 
+		Cur_Product.c_uom_id, 
+		NULL,--calculated,
+		Cur_Product.productiontype, 
+		Cur_Product.rejectedquantity, 
+		0,--calccost, 
+		0,--componentcost, 
+		NULL,--em_almac_asi_id, 
+		NULL,--em_prod_timespent, 
+		NULL--em_prod_costsubcontract
+		);
+ UPDATE m_attributesetinstance SET   em_almac_alto = Cur_Product.alto ,
+  em_almac_ancho = Cur_Product.ancho,
+  em_almac_fechaentrada = now()
+  WHERE m_attributesetinstance_id=Cur_Product.m_attributesetinstance_id;
+    END LOOP; 
+	    
+SELECT prod_transformarcostos(Cur_Production.m_production_id,v_productionplan_id) INTO v_message_cost;
+IF v_message_cost<>'' THEN
+	 RAISE_APPLICATION_ERROR(-20000, v_message_cost);
+END IF;
+
+SELECT MA_WORKEFFORT_VALIDATE(p_PInstance_ID) INTO v_message_run;
+
+SELECT ad_pinstance_id, ad_process_id, record_id, isprocessing, created, 
+       ad_user_id, updated, result, errormsg, ad_client_id, ad_org_id, 
+       createdby, updatedby, isactive INTO Cur_PInstance
+  FROM ad_pinstance WHERE ad_pinstance_id=p_PInstance_ID;
+
+IF Cur_PInstance.result=0 THEN
+RAISE_APPLICATION_ERROR(-20000, Cur_PInstance.errormsg);
+ END IF;
+     --FINISH_PROCESS
+    --<<FINISH_PROCESS>>
+    --  Update AD_PInstance
+
+    AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'N', 1, 'Se ha realizado el corte satisfactoriamente.');
+    RETURN;
+  END; --BODY
+EXCEPTION
+WHEN OTHERS THEN
+  v_ResultStr:= '@ERROR=' || SQLERRM;
+  DBMS_OUTPUT.PUT_LINE(v_ResultStr) ;
+  ROLLBACK;
+  AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'N', 0, v_ResultStr) ;
+  RETURN;
+END PROD_PROCESARCORTE
+]]></body>
+    </function>
+  </database>

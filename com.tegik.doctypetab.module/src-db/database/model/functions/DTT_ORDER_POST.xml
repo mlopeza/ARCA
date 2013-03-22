@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION DTT_ORDER_POST">
+    <function name="DTT_ORDER_POST" type="NULL">
+      <parameter name="p_pinstance_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[-- Logistics
+  v_ResultStr VARCHAR2(2000):='';
+  v_Message VARCHAR2(2000):='';
+  v_Record_ID VARCHAR2(32);
+  v_User VARCHAR2(32);
+  v_executeString VARCHAR2(2000);
+  v_singleQuote VARCHAR2(1);
+ 
+    Cur_Parameter RECORD;
+   
+    v_Client_ID VARCHAR2(32);
+    v_Org_ID VARCHAR2(32);
+    v_procedure VARCHAR(255);
+    v_process VARCHAR(32);
+  BEGIN
+   
+      FOR Cur_Parameter IN
+        (SELECT i.Record_ID,
+          i.AD_User_ID,
+          p.ParameterName,
+          p.P_String,
+          p.P_Number,
+          p.P_Date
+        FROM AD_PINSTANCE i
+        LEFT JOIN AD_PINSTANCE_PARA p
+          ON i.AD_PInstance_ID=p.AD_PInstance_ID
+        WHERE i.AD_PInstance_ID=p_PInstance_ID
+        ORDER BY p.SeqNo
+        )
+      LOOP
+        v_Record_ID:=Cur_Parameter.Record_ID;
+        v_User:=Cur_Parameter.AD_User_ID;
+      END LOOP; -- Get Parameter
+    
+  BEGIN --BODY
+
+SELECT em_dtt_ad_process_id INTO v_process FROM c_doctype 
+				WHERE c_doctype_id IN (SELECT c_doctypetarget_id FROM c_order 
+							WHERE c_order_id=v_Record_ID);
+
+
+	IF (v_process IS NULL) THEN
+	 C_ORDER_POST1(p_PInstance_ID, NULL);
+	ELSE
+		SELECT procedurename INTO v_procedure FROM ad_process WHERE ad_process_id=v_process; 
+		IF v_procedure IS NULL THEN
+			RAISE_APPLICATION_ERROR(-20000, 'El tipo de documento no tiene un proceso asociado.') ;
+		END IF;
+	
+		v_singleQuote = '''';
+		v_executeString = 'SELECT ' || v_procedure || '(' || v_singleQuote || p_PInstance_ID || v_singleQuote || ')';
+		
+		EXECUTE IMMEDIATE v_executeString;
+		RETURN;
+	END IF;
+
+END; --BODY
+END DTT_ORDER_POST
+]]></body>
+    </function>
+  </database>

@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_PERMMOVER">
+    <trigger name="ALMAC_PERMMOVER" table="M_MOVEMENTLINE" fires="after" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[v_reservadas NUMBER:=0;
+v_qtysd NUMBER:=0;
+v_tileosalb VARCHAR(60);
+BEGIN
+    
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+
+SELECT em_dmprod_tileoslab INTO v_tileosalb FROM m_product WHERE m_product_id=:NEW.m_product_id;
+
+IF v_tileosalb IS NOT NULL THEN
+	IF v_tileosalb='Slab' THEN
+	
+		SELECT COUNT(*) INTO v_reservadas 
+		FROM ventas_ordline_detail 
+		WHERE m_attributesetinstance_id=:NEW.m_attributesetinstance_id;
+		IF v_reservadas <> 0 THEN
+			RAISE_APPLICATION_ERROR(-20000, 'La pieza ya se encuentra reservada en una órden.');
+		END IF;
+	ELSE
+		--Verifica las piezas reservadas y las piezas enviadas
+		SELECT coalesce(coalesce(sum(od.qty),0)-coalesce(sum(hd2.qty),0),0) INTO v_reservadas
+		FROM ventas_ordline_detail od
+		LEFT JOIN ventas_historial_desgloce hd2 ON hd2.ventas_ordline_detail_id = od.ventas_ordline_detail_id
+		JOIN m_inoutline iol ON iol.m_inoutline_id = hd2.m_inoutline_id AND hd2.m_attributesetinstance_id = od.m_attributesetinstance_id
+			AND hd2.m_attributesetinstance_id = :NEW.m_attributesetinstance_id 
+			AND hd2.m_product_id = :NEW.m_product_id
+			AND (iol.m_inout_id IN (SELECT m_inout.m_inout_id FROM m_inout WHERE m_inout.docstatus = 'CO'))
+			AND od.c_orderline_id in 
+				(select c_orderline_id from c_orderline where c_order_id in 
+					(select c_order_id from c_order where docstatus = 'CO'
+						AND m_warehouse_id = (select m_warehouse_id from m_locator where m_locator_id = :NEW.M_LOCATOR_ID)
+					)
+				)
+		GROUP BY hd2.ventas_ordline_detail_id;
+
+		v_reservadas = COALESCE(v_reservadas, 0);
+	
+		SELECT sum(qtyonhand) INTO v_qtysd FROM m_storage_detail 
+		WHERE m_attributesetinstance_id=:NEW.m_attributesetinstance_id 
+		AND m_locator_id=:NEW.m_locator_id;
+
+		IF :NEW.movementqty>v_qtysd-v_reservadas THEN 
+			RAISE_APPLICATION_ERROR(-20000, 'v_qtysd <' ||v_qtysd || '>  v_reservadas <'|| v_reservadas || '> NEW.movementqty <' || :NEW.movementqty ||'> No cuenta con suficiente material disponible ('|| round(v_qtysd-v_reservadas,4) ||') en el huacal.');
+		END IF;
+	END IF;
+END IF;
+
+END ALMAC_PERMMOVER
+]]></body>
+    </trigger>
+  </database>

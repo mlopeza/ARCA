@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_ORDLINE_D_TRG2">
+    <trigger name="VENTAS_ORDLINE_D_TRG2" table="VENTAS_ORDLINE_DETAIL" fires="after" insert="true" update="true" delete="true" foreach="row">
+      <body><![CDATA[ 
+v_ol  VARCHAR(32);
+v_suma NUMBER;
+v_suma2 NUMBER;
+        
+BEGIN
+    
+
+	IF DELETING THEN
+		v_ol = :OLD.C_ORDERLINE_ID;
+	ELSE
+		v_ol = :NEW.C_ORDERLINE_ID;
+	END IF;
+
+	SELECT SUM(QTY) - SUM(QTY_FACTURADO) INTO v_suma FROM VENTAS_ORDLINE_DETAIL WHERE C_ORDERLINE_ID = v_ol;
+
+	SELECT SUM(QTY_FACTURAR) INTO v_suma2 FROM VENTAS_ORDLINE_DETAIL WHERE C_ORDERLINE_ID = v_ol AND FACTURADO = 'Y';
+
+	UPDATE C_ORDERLINE SET EM_VENTAS_QTYFACTURA = COALESCE(v_suma,0) WHERE C_ORDERLINE_ID = v_ol;
+
+	UPDATE C_ORDERLINE SET EM_VENTAS_QTYFACTURAREAL = COALESCE(v_suma2,0) WHERE C_ORDERLINE_ID = v_ol;
+	
+	END VENTAS_ORDLINE_D_TRG2
+]]></body>
+    </trigger>
+  </database>

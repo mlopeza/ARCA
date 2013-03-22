@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_DISTRIBUYE">
+    <function name="ALMAC_DISTRIBUYE" type="VARCHAR">
+      <parameter name="p_pinstance_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[/*************************************************************************
+* The contents of this file are subject to the Openbravo  Public  License
+* Version  1.1  (the  "License"),  being   the  Mozilla   Public  License
+* Version 1.1  with a permitted attribution clause; you may not  use this
+* file except in compliance with the License. You  may  obtain  a copy of
+* the License at http://www.openbravo.com/legal/license.html
+* Software distributed under the License  is  distributed  on  an "AS IS"
+* basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+* License for the specific  language  governing  rights  and  limitations
+* under the License.
+* The Original Code is Openbravo ERP.
+* The Initial Developer of the Original Code is Openbravo SLU
+* All portions are Copyright (C) 2001-2008 Openbravo SLU
+* All Rights Reserved.
+* Contributor(s):  ______________________________________.
+************************************************************************/
+ -- Logistice
+  v_ResultStr VARCHAR2(2000):='';
+  v_Message VARCHAR2(2000):='';
+  -- Parameter
+  TYPE RECORD IS REF CURSOR;
+    Cur_Parameter RECORD;
+    cur_iol RECORD;
+    v_Record_ID VARCHAR2(32):=NULL;
+    v_count NUMBER;
+    v_movDistrib NUMBER;
+    v_fechaEntrada timestamp without time zone;  
+    v_line NUMBER;
+    vResult VARCHAR(32);
+    cur_distrib RECORD;
+BEGIN
+
+         DBMS_OUTPUT.PUT_LINE('Updating PInstance - Processing ' || p_PInstance_ID) ;
+          SELECT COUNT(*)
+          INTO v_count
+          FROM AD_PINSTANCE
+          WHERE AD_PROCESS_ID IN
+            (SELECT AD_PROCESS_ID FROM AD_PINSTANCE WHERE AD_PInstance_ID=p_PInstance_ID)
+            AND IsProcessing='Y'
+            AND AD_PInstance_ID<>p_PInstance_ID;
+          IF(v_count>0) THEN
+            --RAISE_APPLICATION_ERROR(-20000, '@SerialProcessStillRunning@') ;
+          END IF;
+          --  Update AD_PInstance
+          DBMS_OUTPUT.PUT_LINE('Updating PInstance - Processing ' || p_PInstance_ID) ;
+          v_ResultStr:='PInstanceNotFound';
+          --PERFORM AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'Y', NULL, NULL) ;
+          -- Get Parameters
+          v_ResultStr:='ReadingParameters';
+          FOR Cur_Parameter IN
+            (SELECT i.Record_ID,
+              i.AD_User_ID,
+              p.ParameterName,
+              p.P_String,
+              p.P_Number,
+              p.P_Date
+            FROM AD_PINSTANCE i
+            LEFT JOIN AD_PINSTANCE_PARA p
+              ON i.AD_PInstance_ID=p.AD_PInstance_ID
+            WHERE i.AD_PInstance_ID=p_PInstance_ID
+            ORDER BY p.SeqNo
+            )
+          LOOP
+            v_Record_ID:=Cur_Parameter.Record_ID;
+          END LOOP; -- Get Parameter
+
+        SELECT MOVEMENTDATE INTO v_fechaEntrada FROM M_INOUT WHERE M_INOUT_ID = v_Record_ID;
+
+	v_line = 10;
+	FOR cur_iol IN
+	(SELECT * FROM M_INOUTLINE WHERE M_INOUT_ID = v_Record_ID)
+	LOOP
+		FOR cur_distrib IN
+		(SELECT * FROM ALMAC_DISTRIB WHERE M_INOUTLINE_ID = cur_iol.M_INOUTLINE_ID)
+		LOOP
+		
+			IF (cur_distrib.movementqty <> 0) THEN
+				v_line = v_line + 10;
+				INSERT INTO m_inoutline
+				(m_inoutline_id, ad_client_id, ad_org_id, isactive, createdby, 
+					updatedby, line, description, m_inout_id, c_orderline_id, 
+					m_locator_id, m_product_id, c_uom_id, movementqty, isinvoiced, 
+					m_attributesetinstance_id, isdescription, m_product_uom_id, 
+					em_compra_contenedor_id, em_compra_il_id, em_almac_qtyasignada, 
+					em_almac_movementqty,em_almac_preciom2)
+				VALUES 
+				(GET_UUID(), cur_iol.ad_client_id, cur_iol.ad_org_id, cur_iol.isactive, cur_distrib.createdby, 
+					cur_distrib.updatedby, v_line, cur_iol.description, cur_iol.m_inout_id, cur_iol.c_orderline_id, 
+					cur_distrib.m_locator_id, cur_iol.m_product_id, cur_iol.c_uom_id, cur_distrib.movementqty, cur_iol.isinvoiced, 
+					cur_distrib.m_attributesetinstance_id, cur_iol.isdescription, cur_iol.m_product_uom_id, 
+					cur_iol.em_compra_contenedor_id, cur_iol.em_compra_il_id, cur_distrib.movementqty, 
+					cur_distrib.movementqty,cur_distrib.costo_pieza);
+
+				UPDATE M_ATTRIBUTESETINSTANCE SET 
+					EM_ALMAC_ALTO = cur_distrib.alto, 
+					EM_ALMAC_ANCHO = cur_distrib.ANCHO, 
+					EM_ALMAC_FECHAENTRADA = v_fechaEntrada,
+					EM_ALMAC_COSTO_REALUSD = cur_distrib.costo_pieza
+				WHERE M_ATTRIBUTESETINSTANCE_ID = cur_distrib.m_attributesetinstance_id;
+
+				--RETURN 'ERROR, SI PASE BIEN';
+				
+			END IF;
+		END LOOP;
+
+		DELETE FROM ALMAC_DISTRIB WHERE M_INOUTLINE_ID = cur_iol.M_INOUTLINE_ID;
+		DELETE FROM M_INOUTLINE WHERE M_INOUTLINE_ID = cur_iol.M_INOUTLINE_ID;
+		
+
+	END LOOP;
+
+
+ RETURN 'OK';
+END ALMAC_DISTRIBUYE
+]]></body>
+    </function>
+  </database>

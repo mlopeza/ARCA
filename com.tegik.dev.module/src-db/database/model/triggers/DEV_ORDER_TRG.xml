@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER DEV_ORDER_TRG">
+    <trigger name="DEV_ORDER_TRG" table="C_ORDER" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[
+/*************************************************************************
+* The contents of this file are subject to the Openbravo  Public  License
+* Version  1.1  (the  "License"),  being   the  Mozilla   Public  License
+* Version 1.1  with a permitted attribution clause; you may not  use this
+* file except in compliance with the License. You  may  obtain  a copy of
+* the License at http://www.openbravo.com/legal/license.html
+* Software distributed under the License  is  distributed  on  an "AS IS"
+* basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the
+* License for the specific  language  governing  rights  and  limitations
+* under the License.
+* The Original Code is Openbravo ERP.
+* The Initial Developer of the Original Code is Openbravo SLU
+* All portions are Copyright (C) 2011 Openbravo SLU
+* All Rights Reserved.
+* Contributor(s):  ______________________________________.
+************************************************************************/
+v_pricelist VARCHAR(32);
+v_isDev VARCHAR(1);
+v_Cuenta NUMBER;
+v_paymentterm VARCHAR(32);
+v_curr VARCHAR(32);
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+  IF (TG_OP <> 'DELETE') THEN
+	SELECT EM_DEV_ISDEV INTO v_isDev FROM C_DOCTYPE WHERE C_DOCTYPE_ID = :NEW.C_DOCTYPETARGET_ID;
+	
+	IF (v_isDev = 'Y') THEN
+
+		:NEW.c_bpartner_id:=:NEW.em_dev_bpartner_id;
+		:NEW.c_bpartner_location_id:=:NEW.em_dev_bpartner_location_id;
+
+		IF :NEW.EM_DEV_INVOICE_ID IS NOT NULL THEN
+		SELECT M_PRICELIST_ID,C_Currency_ID INTO v_pricelist,v_curr FROM C_INVOICE WHERE C_INVOICE_ID = :NEW.EM_DEV_INVOICE_ID;
+		:NEW.M_PRICELIST_ID := v_pricelist;
+		:NEW.C_Currency_ID := v_curr;
+		:NEW.EM_Dev_Pricelist_ID:= v_pricelist;
+		ELSE
+		:NEW.M_PRICELIST_ID:=:NEW.EM_Dev_Pricelist_ID;
+		END IF;
+		
+		SELECT c_paymentterm_id INTO v_paymentterm
+		FROM c_paymentterm 
+		WHERE ad_client_id= :NEW.ad_client_id 
+		AND netdays=0 LIMIT 1;
+		IF v_paymentterm IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20501, 'No existe un término de pago de contado.') ;
+		END IF;
+		:NEW.c_paymentterm_id:=v_paymentterm;
+		
+		SELECT COUNT(*) INTO v_Cuenta FROM C_ORDERLINE WHERE C_ORDER_ID = :NEW.C_ORDER_ID;
+
+		IF (UPDATING) THEN
+			IF (:NEW.EM_DEV_INVOICE_ID <> :OLD.EM_DEV_INVOICE_ID AND v_Cuenta > 0) THEN
+				RAISE_APPLICATION_ERROR(-20501, 'No se puede cambiar el encabezado si hay líneas') ;
+			END IF;
+		END IF;
+	
+		IF (:NEW.DOCSTATUS = 'DR' AND :NEW.EM_DEV_WH_ID IS NOT NULL) THEN
+			:NEW.M_WAREHOUSE_ID := :NEW.EM_DEV_WH_ID;
+		END IF;
+	
+
+	END IF;
+  END IF;
+  
+END DEV_ORDER_TRG
+]]></body>
+    </trigger>
+  </database>

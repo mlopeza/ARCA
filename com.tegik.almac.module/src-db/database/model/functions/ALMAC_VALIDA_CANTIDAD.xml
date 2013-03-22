@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_VALIDA_CANTIDAD">
+    <function name="ALMAC_VALIDA_CANTIDAD" type="VARCHAR">
+      <parameter name="p_product_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_cantidad" type="NUMERIC" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_asi_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_locator_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_uom_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[v_tileoslab VARCHAR(32);
+  v_respuesta VARCHAR(30000);
+  v_area NUMBER;
+  v_stock NUMBER;
+  v_name VARCHAR(255);
+  v_slab VARCHAR(255);
+BEGIN  
+	SELECT ROUND(EM_DMPROD_HEIGHT,8) * ROUND(EM_DMPROD_WIDTH,8), EM_DMPROD_TILEOSLAB, NAME , ROUND(EM_DMPROD_HEIGHT,8), ROUND(EM_DMPROD_WIDTH,8) INTO v_area, v_tileoslab, v_name FROM M_PRODUCT WHERE M_PRODUCT_ID = p_product_id;
+	v_area = ROUND(v_area, 8);
+	
+	
+	
+	IF (UPPER(v_tileoslab) = 'TILE') THEN
+		IF (v_area IS NULL) THEN
+			v_respuesta = 'Las dimensiones del tile no están configuradas para el producto: ' || v_name;
+			RETURN v_respuesta;
+		END IF;
+	
+		IF (ROUND(abs(p_cantidad),8) % v_area > 0) THEN
+			v_respuesta = 'Error, la cantidad configurada no es multiplo de ' || v_area || ', solamente se pueden mover piezas enteras. Producto: ' || v_name;
+			RETURN v_respuesta;
+		END IF;
+
+	END IF;
+
+	IF (UPPER(v_tileoslab) = 'SLAB') THEN
+		SELECT ROUND(QTYONHAND,8) INTO v_stock FROM M_STORAGE_DETAIL WHERE M_PRODUCT_ID = p_product_id AND M_LOCATOR_ID = p_locator_id AND M_ATTRIBUTESETINSTANCE_ID = p_asi_id AND C_UOM_ID = p_uom_id;
+		SELECT description INTO v_slab FROM M_ATTRIBUTESETINSTANCE WHERE M_ATTRIBUTESETINSTANCE_ID= p_asi_id;
+		IF (ROUND(abs(p_cantidad),8) <> v_stock) THEN
+			v_respuesta = 'Error, ('||ROUND(abs(p_cantidad),8)||') se tiene que mover el slab entero: ' || v_stock || ' m2. Producto: ' || v_name||'. Lámina: '||v_slab;
+			RETURN v_respuesta;
+		END IF;
+	END IF;
+
+	v_respuesta = 'OK';
+	
+	RETURN v_respuesta;
+END ALMAC_VALIDA_CANTIDAD
+]]></body>
+    </function>
+  </database>

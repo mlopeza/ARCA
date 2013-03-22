@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_BP_TRG">
+    <trigger name="VENTAS_BP_TRG" table="C_BPARTNER" fires="after" insert="true" update="false" delete="false" foreach="row">
+      <body><![CDATA[
+  /*************************************************************************
+  * The contents of this file are subject to the Compiere Public
+  * License 1.1 ("License"); You may not use this file except in
+  * compliance with the License. You may obtain a copy of the License in
+  * the legal folder of your Openbravo installation.
+  * Software distributed under the License is distributed on an
+  * "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+  * implied. See the License for the specific language governing rights
+  * and limitations under the License.
+  * The Original Code is  Compiere  ERP &  Business Solution
+  * The Initial Developer of the Original Code is Jorg Janke and ComPiere, Inc.
+  * Portions created by Jorg Janke are Copyright (C) 1999-2001 Jorg Janke,
+  * parts created by ComPiere are Copyright (C) ComPiere, Inc.;
+  * All Rights Reserved.
+  * Contributor(s): Openbravo SLU
+  * Contributions are Copyright (C) 2001-2010 Openbravo, S.L.U.
+  *
+  * Specifically, this derivative work is based upon the following Compiere
+  * file and version.
+  *************************************************************************
+  * $Id: C_BPartner_Trg.sql,v 1.4 2002/10/23 03:16:57 jjanke Exp $
+  ***
+  * Title: Business Partner new necord
+  * Description:
+  *    - create default Account records
+  *    - add treenode
+  ************************************************************************/
+
+
+v_credito VARCHAR(32);
+v_location VARCHAR(32);
+v_cuenta NUMBER;
+
+BEGIN
+
+/*CONTADO*/
+
+--RAISE NOTICE '%', '------------------------------------------------------------';
+--RAISE NOTICE '%', NEW.C_BPARTNER_ID;
+
+	SELECT C_PAYMENTTERM_ID INTO v_credito FROM C_PAYMENTTERM WHERE AD_CLIENT_ID = :NEW.AD_CLIENT_ID AND NETDAYS = 0;
+		
+	IF (v_credito IS NOT NULL) THEN
+		SELECT COUNT(*) INTO v_cuenta FROM ptyt_term_bp WHERE C_BPARTNER_ID = :NEW.C_BPARTNER_ID AND C_PAYMENTTERM_ID = v_credito;
+		IF (v_cuenta = 0) THEN
+			INSERT INTO ptyt_term_bp(
+			ptyt_term_bp_id, ad_client_id, ad_org_id, isactive, created, 
+			createdby, updated, updatedby, description, c_paymentterm_id, 
+			c_bpartner_id)
+		VALUES (GET_UUID(), :NEW.AD_CLIENT_ID, :NEW.AD_ORG_ID, :NEW.ISACTIVE, now(), 
+			:NEW.UPDATEDBY, now(), :NEW.UPDATEDBY, NULL, v_credito, 
+			:NEW.C_BPARTNER_ID);
+
+		END IF;
+	END IF;
+
+	--RAISE NOTICE '%', 'Contado: ' || COALESCE(v_credito,'NADA');
+
+
+
+/*7 DIAS*/
+
+	SELECT C_PAYMENTTERM_ID INTO v_credito FROM C_PAYMENTTERM WHERE AD_CLIENT_ID = :NEW.AD_CLIENT_ID AND NETDAYS = 7;
+		
+	IF (v_credito IS NOT NULL) THEN
+		SELECT COUNT(*) INTO v_cuenta FROM ptyt_term_bp WHERE C_BPARTNER_ID = :NEW.C_BPARTNER_ID AND C_PAYMENTTERM_ID = v_credito;
+		IF (v_cuenta = 0) THEN
+			INSERT INTO ptyt_term_bp(
+			ptyt_term_bp_id, ad_client_id, ad_org_id, isactive, created, 
+			createdby, updated, updatedby, description, c_paymentterm_id, 
+			c_bpartner_id)
+		VALUES (GET_UUID(), :NEW.AD_CLIENT_ID, :NEW.AD_ORG_ID, :NEW.ISACTIVE, now(), 
+			:NEW.UPDATEDBY, now(), :NEW.UPDATEDBY, NULL, v_credito, 
+			:NEW.C_BPARTNER_ID);
+
+		END IF;
+
+		:NEW.C_PAYMENTTERM_ID = v_credito;
+
+	END IF;
+
+	--RAISE NOTICE '%', '7 DIAS: ' || COALESCE(v_credito,'NADA');
+
+
+/* DIRECCIÓN AUTOMÁTICA */
+
+	SELECT GET_UUID() INTO v_location FROM DUAL;
+
+	INSERT INTO c_location(
+		c_location_id, ad_client_id, ad_org_id, isactive, created, createdby, 
+		updated, updatedby, address1, address2, city, postal, postal_add, 
+		c_country_id, c_region_id, c_city_id, regionname, em_tdirm_numex, 
+		em_tdirm_numin)
+	VALUES (v_location, :NEW.AD_CLIENT_ID, :NEW.AD_ORG_ID, :NEW.ISACTIVE, now(), :NEW.CREATEDBY, 
+		now(), :NEW.UPDATEDBY, 'Calle', 'Colonia', 'Ciudad', 'CP', NULL, 
+		'247', NULL, NULL, NULL, NULL, 
+		NULL);
+
+	INSERT INTO c_bpartner_location(
+		c_bpartner_location_id, ad_client_id, ad_org_id, isactive, created, 
+		createdby, updated, updatedby, "name", isbillto, isshipto, ispayfrom, 
+		isremitto, phone, phone2, fax, c_salesregion_id, c_bpartner_id, 
+		c_location_id, istaxlocation, upc)
+	VALUES (GET_UUID(), :NEW.AD_CLIENT_ID, :NEW.AD_ORG_ID, :NEW.ISACTIVE, now(), 
+		:NEW.UPDATEDBY, now(), :NEW.UPDATEDBY, 'DIRECCION AUTOGENERADA', 'Y', 'Y', 'Y', 
+		'Y', NULL, NULL, NULL, NULL, :NEW.C_BPARTNER_ID, 
+		v_location, 'Y', NULL);
+
+
+	
+EXCEPTION
+ WHEN NO_DATA_FOUND THEN
+  RAISE_APPLICATION_ERROR(-20004, 'C_BPartner InsertTrigger Error: No ClientInfo or parent TreeNode');
+
+END VENTAS_BP_TRG
+]]></body>
+    </trigger>
+  </database>

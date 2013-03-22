@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_UNACCENT">
+    <function name="ALMAC_UNACCENT" type="VARCHAR">
+      <parameter name="p_name" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[v_salida VARCHAR2(2000);
+BEGIN 
+	SELECT translate(
+		p_name,
+		'áãäåāăąÁÂÃÄÅĀĂĄèééêëēĕėęěĒĔĖÉĘĚìíîïìĩīĭÌÍÎÏÌĨĪĬóôõöōŏőÒÓÔÕÖŌŎŐùúûüũūŭůÙÚÛÜŨŪŬŮñÑ',
+		'aaaaaaaaaaaaaaaeeeeeeeeeeeeeeeeiiiiiiiiiiiiiiiiooooooooooooooouuuuuuuuuuuuuuuunn'
+		) INTO v_salida;
+	RETURN v_salida;
+EXCEPTION 
+WHEN OTHERS THEN
+  RAISE;
+END ALMAC_UNACCENT
+]]></body>
+    </function>
+  </database>

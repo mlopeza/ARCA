@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER COMPRA_DESGCONT_TRG">
+    <trigger name="COMPRA_DESGCONT_TRG" table="COMPRA_DESGCONT" fires="after" insert="true" update="true" delete="true" foreach="row">
+      <body><![CDATA[
+    /*************************************************************************
+    *************************************************************************
+    * $Id: C_UOM_Trg.sql,v 1.2 2002/09/13 06:03:44 jjanke Exp $
+    ***
+    * Title: Compra DesgCont
+    * Description:
+    ************************************************************************/
+        
+v_cuenta NUMBER;
+v_documento VARCHAR(100);
+v_embarque VARCHAR(32);
+v_contenedor VARCHAR(32);
+v_id VARCHAR(32);
+v_suma NUMBER;
+v_cantcont NUMBER;
+v_cantcont_gen NUMBER;
+v_cantline NUMBER;
+v_contgen VARCHAR(32);
+v_cont NUMBER;
+
+BEGIN
+    
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+    
+	IF (INSERTING) THEN
+		v_contenedor = :NEW.COMPRA_CONTENEDOR_ID;
+	ELSE
+		v_contenedor = :OLD.COMPRA_CONTENEDOR_ID;
+	END IF;
+	
+	SELECT COMPRA_EMBARQUE_ID INTO v_embarque FROM COMPRA_CONTENEDOR WHERE COMPRA_CONTENEDOR_ID = v_contenedor;
+	
+	SELECT DOCUMENTNO INTO v_documento FROM C_INVOICE WHERE EM_COMPRA_EMBARQUE_ID = v_embarque AND C_INVOICE.DOCSTATUS IN ('DR', 'CO')
+	AND C_DOCTYPETARGET_ID NOT IN (SELECT C_DOCTYPE_ID FROM C_DOCTYPE WHERE DOCBASETYPE = 'API' AND ISSOTRX = 'N' 
+	AND COALESCE(EM_COMPRA_ISNACIONAL,'N') = 'Y');
+			
+	IF (v_documento IS NOT NULL) THEN
+		RAISE_APPLICATION_ERROR(-20000, 'No se pueden hacer cambios. El embarque actual se encuentra en la factura # ' || v_documento) ;
+		RETURN OLD;
+	END IF;
+
+	IF (INSERTING) THEN
+		v_id = :NEW.C_ORDERLINE_ID;
+	ELSE
+		v_id = :OLD.C_ORDERLINE_ID;
+	END IF;
+	
+	SELECT SUM(COALESCE(CANTIDAD,0)) INTO v_suma FROM COMPRA_DESGCONT WHERE C_ORDERLINE_ID = v_id;
+
+	UPDATE C_ORDERLINE SET EM_COMPRA_DESGACUM = v_suma WHERE C_ORDERLINE_ID = v_id;
+--Restricciones y calculo de cantidades en contenedor genérico MALCOLM
+v_cantcont:=0;
+v_cont:=0;
+SELECT SUM(v_cantcont) INTO v_cantcont FROM compra_desgcont WHERE c_orderline_id= v_id ;
+--AND compra_contenedor_id NOT IN 
+       --   (SELECT compra_contenedor_id FROM compra_contenedor WHERE ad_client_id='0');
+SELECT qtyordered INTO v_cantline FROM c_orderline WHERE c_orderline_id = v_id;
+
+v_cantcont_gen:=v_cantline-v_cantcont;
+
+/*
+IF v_cantcont_gen<0 THEN
+	'La suma de las cantidades en los contenedores sobrepasa la cantidad ordenada'
+RETURN OLD;
+END IF;
+SELECT compra_contenedor_id INTO v_contgen FROM compra_contenedor WHERE ad_client_id='0' LIMIT 1;
+SELECT COUNT (*) INTO v_cont FROM compra_desgcont WHERE  c_orderline_id= v_id AND compra_contenedor_id IN 
+          (SELECT compra_contenedor_id FROM compra_contenedor WHERE ad_client_id='0');
+IF v_cont >0 THEN           
+	DELETE FROM compra_desgcont WHERE  c_orderline_id= v_id AND compra_contenedor_id IN 
+		  (SELECT compra_contenedor_id FROM compra_contenedor WHERE ad_client_id='0');
+	IF v_cantcont_gen>0 THEN
+
+	INSERT INTO compra_desgcont(
+		    compra_desgcont_id, 
+		    ad_client_id, 
+		    ad_org_id, 
+		    isactive, 
+		    created, 
+		    createdby, 
+		    updated, 
+		    updatedby, 
+		    compra_contenedor_id, 
+		    c_orderline_id, 
+		    cantidad)
+	    VALUES ( GET_UUID(),--compra_desgcont_id, 
+		    :OLD.ad_client_id, 
+		    :OLD.ad_org_id, 
+		    :OLD.isactive, 
+		    :OLD.created, 
+		    :OLD.createdby, 
+		    :OLD.updated, 
+		    :OLD.updatedby, 
+		    v_contgen, 
+		    :OLD.c_orderline_id, 
+		    v_cantcont_gen);
+
+	END IF;
+END IF;
+*/
+--END Restricciones y calculo de cantidades en contenedor genérico MALCOLM
+
+
+    END COMPRA_DESGCONT_TRG
+]]></body>
+    </trigger>
+  </database>

@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER COMPRA_INOUT_TRG2">
+    <trigger name="COMPRA_INOUT_TRG2" table="M_INOUT" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[v_pricelist VARCHAR(32);
+v_isNacional VARCHAR(1);
+v_Cuenta NUMBER;
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+  IF (TG_OP <> 'DELETE') THEN
+	SELECT EM_COMPRA_ISNACIONAL INTO v_isNacional FROM C_DOCTYPE WHERE C_DOCTYPE_ID = :NEW.C_DOCTYPE_ID;
+	:NEW.EM_COMPRA_ISNACIONAL = v_isNacional;
+	--BUG FIX MALCOLM
+	  IF :NEW.islogistic IS NULL THEN
+		:NEW.islogistic:='N';
+	  END IF;
+	--
+  END IF;
+
+
+  
+END COMPRA_INOUT_TRG2
+]]></body>
+    </trigger>
+  </database>

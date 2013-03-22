@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_INVOICE_TRGDET">
+    <trigger name="VENTAS_INVOICE_TRGDET" table="C_INVOICE" fires="after" insert="true" update="false" delete="false" foreach="row">
+      <body><![CDATA[v_pricelist VARCHAR(32);
+v_isNacional VARCHAR(1);
+v_Cuenta NUMBER;
+CUR_DETALLE RECORD;
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+  FOR CUR_DETALLE IN (SELECT COALESCE(NUMERO, 1) || ') ' || DESCRIPTION AS TEXTO, NUMERO FROM VENTAS_CONDICIONES WHERE ESFACTURA = 'Y' AND AD_CLIENT_ID = :NEW.AD_CLIENT_ID)
+
+	LOOP
+		INSERT INTO ventas_condicionesdet(
+		ventas_condicionesdet_id, ad_client_id, ad_org_id, isactive, 
+		created, createdby, updated, updatedby, description, c_invoice_id, 
+		m_inout_id, c_order_id, NUMERO)
+		VALUES (GET_UUID(), :NEW.ad_client_id, :NEW.ad_org_id, :NEW.isactive, 
+		:NEW.created, :NEW.createdby, :NEW.updated, :NEW.updatedby, CUR_DETALLE.TEXTO, :NEW.C_INVOICE_ID, 
+		NULL, NULL, CUR_DETALLE.NUMERO);
+
+	END LOOP;
+  
+END VENTAS_INVOICE_TRGDET
+]]></body>
+    </trigger>
+  </database>

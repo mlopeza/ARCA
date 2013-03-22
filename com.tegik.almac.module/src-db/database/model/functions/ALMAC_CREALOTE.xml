@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_CREALOTE">
+    <function name="ALMAC_CREALOTE" type="VARCHAR">
+      <parameter name="p_product_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[v_as VARCHAR(32);
+  v_lotctl VARCHAR(32);
+  v_respuesta VARCHAR(32);
+  cur_lotctl RECORD;
+  
+BEGIN  
+
+	SELECT M_ATTRIBUTESET_ID INTO v_as FROM M_PRODUCT WHERE M_PRODUCT_ID = p_product_id;
+
+	IF (v_as IS NULL) THEN
+		RETURN 'El producto no tiene definido un conjunto de atributos.';
+	END IF;
+
+	SELECT M_LOTCTL_ID FROM M_ATTRIBUTESET INTO v_lotctl WHERE M_ATTRIBUTESET_ID = v_as;
+
+	IF (v_lotctl IS NULL) THEN
+		RETURN 'El producto no tiene definido un lote.';
+	END IF;
+
+	SELECT * INTO cur_lotctl FROM M_LOTCTL WHERE M_LOTCTL_ID = v_lotctl;
+
+	SELECT GET_UUID() INTO v_respuesta;
+
+	INSERT INTO m_attributesetinstance(
+		m_attributesetinstance_id, ad_client_id, ad_org_id, isactive, 
+		createdby, updatedby, m_attributeset_id, 
+		lot, description)
+	VALUES 
+		(v_respuesta, cur_lotctl.ad_client_id, '0', cur_lotctl.isactive, 
+		'100', '100', v_as,
+		cur_lotctl.currentnext, cur_lotctl.prefix || cur_lotctl.currentnext || COALESCE(cur_lotctl.suffix, ''));
+
+	UPDATE M_LOTCTL SET CURRENTNEXT = cur_lotctl.currentnext + 1 WHERE M_LOTCTL_ID = cur_lotctl.M_LOTCTL_ID;
+	
+	RETURN v_respuesta;
+END ALMAC_CREALOTE
+]]></body>
+    </function>
+  </database>

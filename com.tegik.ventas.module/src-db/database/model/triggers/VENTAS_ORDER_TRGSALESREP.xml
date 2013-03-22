@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_ORDER_TRGSALESREP">
+    <trigger name="VENTAS_ORDER_TRGSALESREP" table="C_ORDER" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[
+v_n NUMBER;
+
+BEGIN
+    
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+
+    IF (:NEW.SALESREP_ID IS NULL) THEN
+	:NEW.SALESREP_ID = :NEW.UPDATEDBY;
+    END IF;
+
+    :NEW.EM_VENTAS_BP_ID = :NEW.C_BPARTNER_ID;
+
+END VENTAS_ORDER_TRGSALESREP
+]]></body>
+    </trigger>
+  </database>

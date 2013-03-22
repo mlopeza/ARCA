@@ -1,0 +1,185 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION VENTAS_FACTURAR0">
+    <function name="VENTAS_FACTURAR0" type="NULL">
+      <parameter name="p_pinstance_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[/*************************************************************************
+  * The contents of this file are subject to the Compiere Public
+  * License 1.1 ("License"); You may not use this file except in
+  * compliance with the License. You may obtain a copy of the License in
+  * the legal folder of your Openbravo installation.
+  * Software distributed under the License is distributed on an
+  * "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+  * implied. See the License for the specific language governing rights
+  * and limitations under the License.
+  * The Original Code is  Compiere  ERP &  Business Solution
+  * The Initial Developer of the Original Code is Jorg Janke and ComPiere, Inc.
+  * Portions created by Jorg Janke are Copyright (C) 1999-2001 Jorg Janke,
+  * parts created by ComPiere are Copyright (C) ComPiere, Inc.;
+  * All Rights Reserved.
+  * Contributor(s): Openbravo SLU
+  * Contributions are Copyright (C) 2001-2008 Openbravo, S.L.U.
+  *
+  * Specifically, this derivative work is based upon the following Compiere
+  * file and version.
+  *************************************************************************
+  * $Id: C_Invoice_CreateReceipt.sql,v 1.2 2002/05/22 02:48:28 jjanke Exp $
+  ***
+  * Title: Create Receipt (Shipment) From Invoice
+  * Description:
+  ************************************************************************/
+  -- Logistice
+  v_ResultStr VARCHAR2(2000):='';
+  v_Message VARCHAR2(2000):='';
+  v_Record_ID VARCHAR2(32);
+  -- Parameter
+  TYPE RECORD IS REF CURSOR;
+    Cur_Parameter RECORD;
+    -- Parameter Variables
+    v_M_Locator_ID VARCHAR2(32);
+    --
+    v_DocStatus VARCHAR2(60) ;
+    v_InOut_ID VARCHAR2(32);
+    FINISH_PROCESS BOOLEAN:=false;
+    v_disponible NUMBER;
+    v_idFactura VARCHAR(32);
+    v_doc VARCHAR(32);
+    v_mensaje VARCHAR(2000);
+    v_aprobado VARCHAR(1);
+    v_atraso NUMBER;
+    v_limite NUMBER;
+    v_mtoaprob NUMBER;
+    v_totalfact NUMBER;
+    v_DocAction VARCHAR(5);
+    v_linea NUMBER;
+    v_c_Bpartner_Id VARCHAR(32);
+    v_permitirSalida VARCHAR(1);
+    v_pricelisttgk VARCHAR(32);
+    v_currency VARCHAR(32);
+    v_tipoCambio NUMBER;
+    v_currencyOrder VARCHAR(32);
+    v_finiquito VARCHAR(1);
+
+v_q VARCHAR(255);
+
+  BEGIN
+    --  Update AD_PInstance
+    IF (p_PInstance_ID IS NOT NULL) THEN
+	    DBMS_OUTPUT.PUT_LINE('Updating PInstance - Processing ' || p_PInstance_ID) ;
+	    v_ResultStr:='PInstanceNotFound';
+	    AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'Y', NULL, NULL) ;
+     END IF;
+	  BEGIN --BODY
+	    -- Get Parameters
+	       v_ResultStr:='ReadingParameters';
+	    FOR Cur_Parameter IN
+	      (SELECT i.Record_ID,
+		p.ParameterName,
+		p.P_String,
+		p.P_Number,
+		p.P_Date
+	      FROM AD_PInstance i
+	      LEFT JOIN AD_PInstance_Para p
+		ON i.AD_PInstance_ID=p.AD_PInstance_ID
+	      WHERE i.AD_PInstance_ID=p_PInstance_ID
+	      ORDER BY p.SeqNo
+	      )
+	    LOOP
+	      v_Record_ID:=Cur_Parameter.Record_ID;
+	      IF(Cur_Parameter.ParameterName='M_Pricelist_ID') THEN
+		v_pricelisttgk:=Cur_Parameter.P_String;
+	      END IF;
+	      IF(Cur_Parameter.ParameterName='tipocambio') THEN
+		v_tipoCambio:=Cur_Parameter.P_Number;
+	      END IF;
+	      IF(Cur_Parameter.ParameterName='finiquito') THEN
+		v_finiquito:=Cur_Parameter.P_String;
+	      END IF;
+	    END LOOP; -- Get Parameter
+	    -- Read Information from Record
+
+	--PERFORM VENTAS_CHK_STOCK(NULL, v_Record_ID);
+
+	SELECT EM_VENTAS_PERMITIRSALIDA INTO v_permitirSalida from C_ORDER WHERE C_ORDER_ID = v_Record_ID;
+
+
+	IF (v_permitirSalida = 'N') THEN
+
+		SELECT LINE INTO v_linea FROM C_ORDERLINE WHERE C_ORDER_ID = v_Record_ID AND ROUND(EM_VENTAS_QTYFACTURA,4) < ROUND(EM_VENTAS_QTYFACTURAREAL,4) ORDER BY LINE LIMIT 1;
+
+		IF (v_linea IS NOT NULL) THEN
+			RAISE_APPLICATION_ERROR(-20000, 'La cantidad a facturar excede la cantidad disponible en la línea ' || v_linea) ;
+		END IF;
+	
+
+	SELECT DOCACTION, em_ventas_aprob, ROUND(EM_VENTAS_TOTALFACT -.005, 2), EM_VENTAS_CANT_APROB, C_BPARTNER_ID INTO v_DocAction, v_aprobado, v_totalfact, v_mtoaprob, v_c_Bpartner_Id  FROM C_ORDER WHERE C_ORDER_ID = v_Record_ID;
+	 		
+		IF (COALESCE(v_aprobado, 'N') = 'N') THEN 
+
+			SELECT VENTAS_ATRASO(v_c_Bpartner_Id) INTO v_atraso;
+
+			IF (v_atraso > 0) THEN
+				--RAISE_APPLICATION_ERROR(-20000, 'El cliente cuenta con ' || v_atraso || ' dias de retraso en sus pagos, es necesario solicitar la aprobación de tesorería') ;
+			END IF;
+
+			SELECT VENTAS_LIMITE(v_Record_ID) INTO v_limite;
+
+			IF (v_limite > 0) THEN
+				--RAISE_APPLICATION_ERROR(-20000, 'El cliente ha excedido su límite de crédito por ' || v_limite || ' pesos, es necesario solicitar la aprobación de tesorería') ;
+			END IF;
+		ELSE
+			IF v_mtoaprob<v_totalfact THEN
+				--RAISE_APPLICATION_ERROR(-20000, 'El monto total excede el monto aprobado para esta órden de ' || v_mtoaprob || '.') ;
+			END IF;
+		END IF;
+
+	END IF;
+
+	
+	SELECT C_CURRENCY_ID INTO v_currency FROM M_PRICELIST WHERE M_PRICELIST_ID = v_pricelisttgk;
+
+	SELECT C_CURRENCY_ID INTO v_currencyOrder FROM C_ORDER WHERE C_ORDER_ID = v_Record_ID;
+
+	IF (v_currency = v_currencyOrder) THEN
+		v_tipoCambio = 1;
+	END IF;
+
+	UPDATE C_ORDERLINE SET C_CURRENCY_ID = v_currencyOrder WHERE C_ORDER_ID = v_Record_ID;
+
+	SELECT VENTAS_FACTURAR(NULL, v_Record_ID, v_currency, v_pricelisttgk, v_tipoCambio, v_finiquito) INTO v_idFactura ;
+
+--IF  char_length(v_q)<>32 THEN
+--ELSE
+--v_idFactura:=v_q;
+--END IF;
+	
+	IF (COALESCE(v_idFactura, '0') <> '0') THEN
+
+		SELECT DOCUMENTNO INTO v_doc FROM C_INVOICE WHERE C_INVOICE_ID = v_idFactura;
+		v_mensaje = 'Se creó la factura # ' || v_doc || '. Verificarla y completarla para enviar la mercancía';
+		UPDATE C_ORDER SET EM_VENTAS_ALERTSTATUS = 'CP' WHERE C_ORDER_ID = v_Record_ID;
+	ELSE
+		RAISE_APPLICATION_ERROR(-20000, ' Hubo un error en la creación de la factura') ;
+	END IF;
+
+	IF (p_PInstance_ID IS NOT NULL) THEN
+		AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'N', 1, v_mensaje);
+	END IF;
+
+    RETURN;
+  END; --BODY
+EXCEPTION
+WHEN OTHERS THEN
+  v_ResultStr:= '@ERROR=' || SQLERRM;
+  DBMS_OUTPUT.PUT_LINE(v_ResultStr) ;
+  ROLLBACK;
+  IF (p_PInstance_ID IS NOT NULL) THEN
+	AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'N', 0, v_ResultStr) ;
+	RETURN;
+  END IF;
+  RAISE v_ResultStr;
+END VENTAS_FACTURAR0
+]]></body>
+    </function>
+  </database>

@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_ORDLINE_D_TRG">
+    <trigger name="ALMAC_ORDLINE_D_TRG" table="VENTAS_ORDLINE_DETAIL" fires="after" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[ 
+v_ol  VARCHAR(32);
+v_o VARCHAR (32);
+v_iswarehouse  NUMBER;
+
+        
+BEGIN
+    
+
+	IF DELETING THEN
+		v_ol = :OLD.C_ORDERLINE_ID;
+	ELSE
+		v_ol = :NEW.C_ORDERLINE_ID;
+	END IF;
+
+	SELECT c_order_id INTO v_o FROM c_orderline WHERE c_orderline_id=:NEW.c_orderline_id;
+	SELECT COUNT(*) INTO v_iswarehouse 
+	FROM ad_role r
+	WHERE ad_role_id IN (SELECT ad_role_id FROM ad_user_roles WHERE ad_user_id=:NEW.updatedby)
+	AND r.em_almac_iswarehouse='Y';
+
+	IF v_iswarehouse>0 THEN
+		UPDATE c_order SET em_almac_whcreated='Y' WHERE c_order_id=v_o;
+	ELSE 
+		UPDATE c_order SET em_almac_whcreated='N' WHERE c_order_id=v_o;
+	END IF;
+
+
+	END ALMAC_ORDLINE_D_TRG
+]]></body>
+    </trigger>
+  </database>

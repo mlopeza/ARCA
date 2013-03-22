@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="agentes_subreport1" pageWidth="802" pageHeight="555" orientation="Landscape" columnWidth="802" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="4.28717762000002"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="6"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50" isBold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18" isBold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14" isBold="true" pdfFontName="Times-Roman"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#ACC5D7"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="BASE_WEB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/web"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="user_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_user_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["'" + $P{user_id}+"'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="marca" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_marca" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{marca}.equals("") ? " ": "AND mca.tmarcas_marcas_id='" + $P{marca}+"'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="bpartner_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_bpartner_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{bpartner_id}.equals("") ? " ": "AND b.c_bpartner_id='" + $P{bpartner_id}+"'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="USER_CLIENT" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="p_id" class="java.lang.String"/>
+	<parameter name="aux_fromfac" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_tofac" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_salesrep_id" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT P.NAME || P.VALUE || ' : Estatus de compras' AS etiqueta,
+       A.EM_ALMAC_STATUS,
+       SUM(CANTIDAD)
+FROM (SELECT COALESCE(EM_ALMAC_STATUS,'Sin Status') AS EM_ALMAC_STATUS,
+             SUM(QTYINVOICED - COALESCE((SELECT SUM(QTY) FROM M_MATCHINV WHERE C_INVOICELINE_ID = IL.C_INVOICELINE_ID),0)) AS CANTIDAD
+      FROM C_INVOICELINE IL
+           INNER JOIN C_INVOICE I ON IL.C_INVOICE_ID = I.C_INVOICE_ID AND IL.M_PRODUCT_ID IN ($P{p_id})
+      GROUP BY EM_ALMAC_STATUS
+      UNION
+      SELECT COALESCE(EM_ALMAC_STATUS,'Sin Status') AS EM_ALMAC_STATUS,
+             SUM(QTYORDERED - COALESCE((SELECT SUM(QTY) FROM M_MATCHPO WHERE C_ORDERLINE_ID = OL.C_ORDERLINE_ID AND C_INVOICELINE_ID IS NOT NULL),0)) AS CANTIDAD
+      FROM C_ORDERLINE OL
+           INNER JOIN C_ORDER O ON OL.C_ORDER_ID = O.C_ORDER_ID AND OL.M_PRODUCT_ID IN ($P{p_id})
+      GROUP BY EM_ALMAC_STATUS) A
+INNER JOIN M_PRODUCT P ON P.M_PRODUCT_ID IN ($P{p_id})
+GROUP BY EM_ALMAC_STATUS, P.VALUE, P.NAME;]]>
+	</queryString>
+	<field name="etiqueta" class="java.lang.String"/>
+	<field name="em_almac_status" class="java.lang.String"/>
+	<field name="sum" class="java.math.BigDecimal"/>
+	<variable name="sumsum" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{sum}]]></variableExpression>
+	</variable>
+	<columnHeader>
+		<band height="25" splitType="Stretch">
+			<staticText>
+				<reportElement style="Column header" x="5" y="12" width="282" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Estatus]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="287" y="12" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Cantidad]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="5" y="22" width="562" height="2" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="25" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<textField isStretchWithOverflow="true" pattern="###0">
+				<reportElement style="Detail" positionType="Float" x="5" y="0" width="562" height="12"/>
+				<textElement textAlignment="Left">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{etiqueta}]]></textFieldExpression>
+			</textField>
+			<frame>
+				<reportElement mode="Opaque" x="567" y="0" width="5" height="25" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="10" splitType="Stretch">
+			<frame>
+				<reportElement style="Row" mode="Opaque" x="5" y="0" width="562" height="10" forecolor="#000000"/>
+				<textField isStretchWithOverflow="true" pattern="###0.00">
+					<reportElement style="Detail" positionType="Float" x="282" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{sum}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0">
+					<reportElement style="Detail" positionType="Float" x="0" y="0" width="282" height="10"/>
+					<textElement textAlignment="Left">
+						<font fontName="SansSerif" size="7"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{em_almac_status}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="10" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="567" y="0" width="5" height="10" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+		</band>
+	</detail>
+	<summary>
+		<band height="12">
+			<staticText>
+				<reportElement style="Column header" x="5" y="2" width="282" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="5" y="0" width="562" height="2" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<textField isStretchWithOverflow="true" pattern="###0.00">
+				<reportElement style="Detail" positionType="Float" x="287" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumsum}]]></textFieldExpression>
+			</textField>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="12" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="567" y="0" width="5" height="12" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+		</band>
+	</summary>
+	<noData>
+		<band height="10">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="10" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<staticText>
+				<reportElement style="Column header" x="5" y="0" width="282" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No hay compras pendientes]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

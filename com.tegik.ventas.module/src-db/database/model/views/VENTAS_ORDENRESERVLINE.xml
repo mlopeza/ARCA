@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+  <database name="VIEW VENTAS_ORDENRESERVLINE">
+    <view name="VENTAS_ORDENRESERVLINE"><![CDATA[SELECT ol.c_orderline_id AS ventas_ordenreservline_id, ol.ad_client_id, ol.ad_org_id, ol.isactive, ol.created, ol.createdby, ol.updated, ol.updatedby, ol.qtyordered - ol.qtydelivered AS qty_reservada, ol.c_orderline_id, o.c_order_id, o.c_bpartner_id, o.m_warehouse_id, o.dateordered, o.em_ventas_fecha_espera, ol.priceactual, o.c_order_id AS ventas_ordenreserv_id, ol.m_product_id, "substring"(ol.m_product_id, 17) || "substring"(o.m_warehouse_id, 17) AS ventas_storagedet_product_id FROM c_orderline ol JOIN c_order o ON o.c_order_id = ol.c_order_id AND o.docstatus = 'CO' AND o.issotrx = 'Y' WHERE (ol.qtyordered - ol.qtydelivered) > 0]]></view>
+  </database>

@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="agentes_subreport1" pageWidth="802" pageHeight="555" orientation="Landscape" columnWidth="802" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0">
+	<property name="ireport.zoom" value="5.706233412220038"/>
+	<property name="ireport.x" value="12"/>
+	<property name="ireport.y" value="96"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50" isBold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18" isBold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14" isBold="true" pdfFontName="Times-Roman"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#ACC5D7"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="BASE_WEB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/web"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="user_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_user_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["'" + $P{user_id}+"'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="marca" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_marca" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{marca}.equals("") ? " ": "AND mca.tmarcas_marcas_id='" + $P{marca}+"'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="bpartner_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_bpartner_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{bpartner_id}.equals("") ? " ": "AND b.c_bpartner_id='" + $P{bpartner_id}+"'"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="USER_CLIENT" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="p_id" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_fromfac" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_tofac" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_salesrep_id" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT P.NAME || P.VALUE || ' : Stock' AS etiqueta,
+       L.VALUE,
+       SUM(QTYONHAND) AS STOCK,
+       SUM(PREQTYONHAND) AS RESERVADO_ALMACEN,
+       COALESCE((SELECT SUM(QTYORDERED -
+			QTYDELIVERED -
+			COALESCE((SELECT SUM(MOVEMENTQTY)
+				FROM M_INOUTLINE IOL
+				INNER JOIN M_INOUT IO ON IOL.M_INOUT_ID = IO.M_INOUT_ID 						AND IO.DOCSTATUS = 'DR' AND IOL.M_LOCATOR_ID = SD.M_LOCATOR_ID
+ 				WHERE IOL.C_ORDERLINE_ID = OL.C_ORDERLINE_ID),0))       				FROM C_ORDERLINE OL
+  		INNER JOIN C_ORDER O ON O.C_ORDER_ID = OL.C_ORDER_ID
+			AND O.ISSOTRX = 'Y' AND DOCSTATUS = 'CO'
+       		WHERE M_PRODUCT_ID = SD.M_PRODUCT_ID
+			AND OL.M_WAREHOUSE_ID = L.M_WAREHOUSE_ID),0)*-1 AS RESERVADO_VENTAS
+FROM M_STORAGE_DETAIL SD
+     INNER JOIN M_LOCATOR L ON L.M_LOCATOR_ID = SD.M_LOCATOR_ID
+     INNER JOIN M_PRODUCT P ON P.M_PRODUCT_ID = SD.M_PRODUCT_ID AND SD.M_PRODUCT_ID IN ($P{p_id})
+GROUP BY SD.M_LOCATOR_ID,
+         SD.M_PRODUCT_ID,
+         L.M_WAREHOUSE_ID,
+         L.VALUE,
+         P.NAME,
+         P.VALUE;]]>
+	</queryString>
+	<field name="etiqueta" class="java.lang.String"/>
+	<field name="value" class="java.lang.String"/>
+	<field name="stock" class="java.math.BigDecimal"/>
+	<field name="reservado_almacen" class="java.math.BigDecimal"/>
+	<field name="reservado_ventas" class="java.math.BigDecimal"/>
+	<variable name="total" class="java.math.BigDecimal">
+		<variableExpression><![CDATA[new BigDecimal ($F{stock}.doubleValue() + $F{reservado_almacen}.doubleValue() + $F{reservado_ventas}.doubleValue())]]></variableExpression>
+	</variable>
+	<variable name="sumStock" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{stock}]]></variableExpression>
+	</variable>
+	<variable name="sumRA" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{reservado_almacen}]]></variableExpression>
+	</variable>
+	<variable name="sumRV" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{reservado_ventas}]]></variableExpression>
+	</variable>
+	<variable name="sumTotal" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$V{total}]]></variableExpression>
+	</variable>
+	<columnHeader>
+		<band height="24" splitType="Stretch">
+			<staticText>
+				<reportElement style="Column header" x="5" y="12" width="282" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Hueco]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="287" y="12" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Real]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="5" y="22" width="562" height="2" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<staticText>
+				<reportElement style="Column header" x="357" y="12" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Res / almacén]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="427" y="12" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Res / ventas]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="497" y="12" width="70" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="24" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<textField isStretchWithOverflow="true" pattern="###0">
+				<reportElement style="Detail" positionType="Float" x="5" y="1" width="562" height="12"/>
+				<textElement textAlignment="Left">
+					<font fontName="SansSerif" size="10"/>
+				</textElement>
+				<textFieldExpression class="java.lang.String"><![CDATA[$F{etiqueta}]]></textFieldExpression>
+			</textField>
+			<frame>
+				<reportElement mode="Opaque" x="567" y="0" width="5" height="24" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="10" splitType="Stretch">
+			<frame>
+				<reportElement style="Row" mode="Opaque" x="5" y="0" width="562" height="10" forecolor="#000000"/>
+				<textField isStretchWithOverflow="true" pattern="###0.00">
+					<reportElement style="Detail" positionType="Float" x="282" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{stock}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0">
+					<reportElement style="Detail" positionType="Float" x="0" y="0" width="282" height="10"/>
+					<textElement textAlignment="Left">
+						<font fontName="SansSerif" size="7"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{value}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0.00">
+					<reportElement style="Detail" positionType="Float" x="352" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{reservado_almacen}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0.00">
+					<reportElement style="Detail" positionType="Float" x="422" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{reservado_ventas}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0.00">
+					<reportElement style="Detail" positionType="Float" x="492" y="0" width="70" height="10"/>
+					<textElement textAlignment="Right">
+						<font fontName="SansSerif" size="7"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{total}]]></textFieldExpression>
+				</textField>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="567" y="0" width="5" height="10" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="10" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+		</band>
+	</detail>
+	<summary>
+		<band height="12">
+			<staticText>
+				<reportElement style="Column header" x="5" y="2" width="282" height="10" forecolor="#000000"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total]]></text>
+			</staticText>
+			<frame>
+				<reportElement mode="Opaque" x="5" y="0" width="562" height="2" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<textField isStretchWithOverflow="true" pattern="###0.00">
+				<reportElement style="Detail" positionType="Float" x="287" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumStock}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="###0.00">
+				<reportElement style="Detail" positionType="Float" x="357" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumRA}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="###0.00">
+				<reportElement style="Detail" positionType="Float" x="427" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="false"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumRV}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="###0.00">
+				<reportElement style="Detail" positionType="Float" x="497" y="2" width="70" height="10"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<textFieldExpression class="java.math.BigDecimal"><![CDATA[$V{sumTotal}]]></textFieldExpression>
+			</textField>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="12" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="567" y="0" width="5" height="12" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+		</band>
+	</summary>
+	<noData>
+		<band height="12">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="5" height="12" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<staticText>
+				<reportElement style="Column header" x="5" y="0" width="282" height="12" forecolor="#000000"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="SansSerif" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[No hay stock]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

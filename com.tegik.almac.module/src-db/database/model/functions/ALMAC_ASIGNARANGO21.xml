@@ -1,0 +1,253 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_ASIGNARANGO21">
+    <function name="ALMAC_ASIGNARANGO21" type="NULL">
+      <parameter name="p_orderline_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_prefijo" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_attributo" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_asignar" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_liberar" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_act_validar" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_act_enviar" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_des_validar" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_des_enviar" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="r_error" type="VARCHAR" mode="out">
+        <default/>
+      </parameter>
+      <body><![CDATA[-- Logistice
+  v_ResultStr VARCHAR2(52000):='';
+  v_Message VARCHAR2(52000):='';
+  --p_orderline_id VARCHAR(32); --OBTG:VARCHAR2--
+  CUR_ORDERLINE RECORD;
+ v_cantidad NUMBER;
+ v_detailexist NUMBER;
+ v_aux_validar CHAR(1);
+ v_aux_facturar CHAR(1);
+ v_qty_facturar NUMBER;
+ v_oldet_delete VARCHAR(32);
+ v_tileoslab VARCHAR(60);
+ v_mensaje_picking VARCHAR (2000);
+ v_order_repick VARCHAR(32);
+ v_docno_repick  VARCHAR(60);
+ v_ol_repick VARCHAR(32);
+ v_uid_id VARCHAR(32);
+ TEST NUMBER ;
+BEGIN
+  
+  BEGIN --BODY
+    -- Get Parameters
+  r_error:='';
+  SELECT * INTO CUR_ORDERLINE FROM c_orderline WHERE c_orderline_id=p_orderline_id;
+    ------------------------------------
+    ----ASIGNAR
+    ------------------------------------
+    IF p_asignar='Y' THEN
+		--RAISE_APPLICATION_ERROR(-20000, p_prefijo || p_attributo);
+		SELECT pa.m2-pa.cantreservada INTO v_cantidad
+			FROM almac_piezasalmacenadas pa 			
+			WHERE pa.M_PRODUCT_ID = CUR_ORDERLINE.M_PRODUCT_ID 
+			AND pa.M_WAREHOUSE_ID = (SELECT M_WAREHOUSE_ID FROM C_ORDER WHERE C_ORDER_ID = CUR_ORDERLINE.C_ORDER_ID)
+			AND pa.prefijo || pa.numero = p_prefijo || p_attributo
+			ORDER BY pa.m2-pa.cantreservada DESC LIMIT 1;
+
+		IF (v_cantidad IS NULL) THEN
+			RAISE_APPLICATION_ERROR(-20000, 'No encontrado');
+		END IF;
+		IF (v_cantidad <= 0) THEN
+			RAISE_APPLICATION_ERROR(-20000, 'La pieza/huacal se encuentra reservada(o)');
+		END IF;
+			INSERT INTO ventas_ordline_detail(
+				ventas_ordline_detail_id, ad_client_id, ad_org_id,
+				isactive, 
+				facturado, created, createdby, 
+				updated, updatedby, description, 
+				m_storage_detail_id, c_invoiceline_id, c_orderline_id,  
+				qty, m_attributesetinstance_id, 
+				qty_facturar, qty_facturado, atributo, 
+				status, voboalmacen)
+			VALUES (get_uuid(), CUR_ORDERLINE.AD_CLIENT_ID, CUR_ORDERLINE.AD_ORG_ID, 
+				CUR_ORDERLINE.ISACTIVE, 
+				NULL, now(), CUR_ORDERLINE.UPDATEDBY, 
+				now(), CUR_ORDERLINE.UPDATEDBY, NULL, 
+				NULL, NULL, p_orderline_id, 
+				NULL, NULL, 
+				NULL, NULL, p_attributo, 
+				NULL, 'Y');
+		
+
+	
+    END IF;
+    ------------------------------------
+    ----END ASIGNAR
+    ------------------------------------
+    ------------------------------------
+    ----LIBERAR
+    ------------------------------------
+     IF p_liberar='Y' THEN
+	     SELECT em_dmprod_tileoslab INTO v_tileoslab FROM m_product WHERE m_product_id = CUR_ORDERLINE.m_product_id;
+	IF (v_tileoslab='Tile')THEN
+		RAISE_APPLICATION_ERROR(-20000, 'Solo pueden reasignarse Slabs.');
+	END IF;
+
+	     SELECT ventas_ordline_detail_id, ol.c_orderline_id INTO v_oldet_delete, v_ol_repick 
+	     FROM ventas_ordline_detail oldet  
+	     INNER JOIN c_orderline ol ON oldet.c_orderline_id = ol.c_orderline_id
+	     INNER JOIN c_order o ON ol.c_order_id = o.c_order_id
+	     INNER JOIN m_attributesetinstance asi ON asi.m_attributesetinstance_id=oldet.m_attributesetinstance_id
+	     WHERE asi.description = p_prefijo || p_attributo LIMIT 1;
+
+	     DELETE FROM ventas_ordline_detail WHERE ventas_ordline_detail_id=v_oldet_delete;
+		UPDATE ventas_ordline_detail SET voboalmacen='N' WHERE c_orderline_id=v_ol_repick;
+		
+	     SELECT pa.m2-pa.cantreservada INTO v_cantidad
+			FROM almac_piezasalmacenadas pa 			
+			WHERE pa.M_PRODUCT_ID = CUR_ORDERLINE.M_PRODUCT_ID 
+			AND pa.M_WAREHOUSE_ID = (SELECT M_WAREHOUSE_ID FROM C_ORDER WHERE C_ORDER_ID = CUR_ORDERLINE.C_ORDER_ID)
+			AND pa.atributo = p_prefijo || p_attributo
+			ORDER BY pa.m2-pa.cantreservada DESC LIMIT 1;
+		IF (v_cantidad IS NULL) THEN
+			RAISE_APPLICATION_ERROR(-20000, 'No encontrado');
+		END IF;
+		IF (v_cantidad <= 0) THEN
+			RAISE_APPLICATION_ERROR(-20000, 'La pieza/huacal se encuentra reservada(o)');
+		END IF;
+		SELECT GET_UUID() INTO v_uid_id;
+			INSERT INTO ventas_ordline_detail(
+				ventas_ordline_detail_id, ad_client_id, ad_org_id,
+				isactive, 
+				facturado, created, createdby, 
+				updated, updatedby, description, 
+				m_storage_detail_id, c_invoiceline_id, c_orderline_id,  
+				qty, m_attributesetinstance_id, 
+				qty_facturar, qty_facturado, atributo, 
+				status, voboalmacen)
+			VALUES (v_uid_id, CUR_ORDERLINE.AD_CLIENT_ID, CUR_ORDERLINE.AD_ORG_ID, 
+				CUR_ORDERLINE.ISACTIVE, 
+				NULL, now(), CUR_ORDERLINE.UPDATEDBY, 
+				now(), CUR_ORDERLINE.UPDATEDBY, NULL, 
+				NULL, NULL, p_orderline_id, 
+				NULL, NULL, 
+				NULL, NULL, p_attributo, 
+				NULL, 'Y');
+			SELECT 	count(*) INTO TEST FROM ventas_ordline_detail WHERE ventas_ordline_detail_id =v_uid_id;
+		SELECT c_order_id, documentno INTO v_order_repick,v_docno_repick
+		FROM c_order 
+		WHERE c_order_id IN (SELECT c_order_id FROM c_orderline WHERE c_orderline_id=v_ol_repick);
+
+		SELECT ventas_picking(v_order_repick, 'N') INTO v_mensaje_picking;
+		IF v_mensaje_picking = '' THEN
+			r_error:='Orden reasignada '||v_docno_repick;
+			RETURN;
+		ELSE
+			RAISE_APPLICATION_ERROR(-20000, v_mensaje_picking||'(Orden '||v_docno_repick||')');
+		END IF;
+
+     END IF;
+    ------------------------------------
+    ----END LIBERAR
+    ------------------------------------
+    ------------------------------------
+    ----ACTIVAR DESACTIVAR VALIDAR
+    ------------------------------------
+     IF p_act_validar='Y' OR p_des_validar='Y'  THEN
+		v_aux_validar:='N';	
+		IF p_act_validar='Y' THEN
+		v_aux_validar:='Y';
+		END IF;
+
+	
+			SELECT COUNT(*) INTO v_detailexist 
+			FROM ventas_ordline_detail oldd
+			INNER JOIN m_attributesetinstance asi ON oldd.m_attributesetinstance_id=asi.m_attributesetinstance_id
+			WHERE c_orderline_id=p_orderline_id AND asi.description=p_prefijo ||p_attributo;
+
+			
+			IF v_detailexist>0 THEN	
+				UPDATE ventas_ordline_detail SET voboalmacen=v_aux_validar
+				WHERE c_orderline_id=p_orderline_id 
+				AND m_attributesetinstance_id IN (SELECT m_attributesetinstance_id
+								FROM m_attributesetinstance 
+								WHERE description =p_prefijo ||p_attributo);
+			ELSE
+				RAISE_APPLICATION_ERROR(-20000, 'No encontrado');
+			END IF;
+	
+     
+     END IF;
+    ------------------------------------
+    ----END ACTIVAR DESACTIVAR VALIDAR
+    ------------------------------------
+
+    ------------------------------------
+    ----ACTIVAR DESACTIVAR ENVIAR
+    ------------------------------------
+     IF p_act_enviar='Y' OR p_des_enviar='Y' THEN 
+		v_aux_facturar:='N';	
+		IF p_act_enviar='Y' THEN
+		v_aux_facturar:='Y';
+		END IF;
+
+			SELECT COUNT(*) INTO v_detailexist 
+			FROM ventas_ordline_detail oldd
+			INNER JOIN m_attributesetinstance asi ON oldd.m_attributesetinstance_id=asi.m_attributesetinstance_id
+			WHERE c_orderline_id=p_orderline_id AND asi.description=p_prefijo ||p_attributo;
+
+			SELECT qty_facturar INTO v_qty_facturar 
+			FROM ventas_ordline_detail oldd
+			INNER JOIN m_attributesetinstance asi ON oldd.m_attributesetinstance_id=asi.m_attributesetinstance_id
+			WHERE c_orderline_id=p_orderline_id AND asi.description=p_prefijo ||p_attributo;
+
+			IF v_qty_facturar=0 THEN
+				RAISE_APPLICATION_ERROR(-20000, 'Facturado completamente');
+			END IF;
+			
+			IF v_detailexist>0 THEN	
+				UPDATE ventas_ordline_detail SET facturado=v_aux_facturar
+				WHERE c_orderline_id=p_orderline_id 
+				AND m_attributesetinstance_id IN (SELECT m_attributesetinstance_id
+								FROM m_attributesetinstance 
+								WHERE description =p_prefijo ||p_attributo);
+			ELSE
+				RAISE_APPLICATION_ERROR(-20000, 'No encontrado');
+			END IF;
+
+
+     END IF;
+    ------------------------------------
+    ----END ACTIVAR DESACTIVAR ENVIAR
+    ------------------------------------
+   
+     --FINISH_PROCESS
+    --<<FINISH_PROCESS>>
+    --  Update AD_PInstance
+  
+    RETURN;
+  END; --BODY
+EXCEPTION
+WHEN OTHERS THEN
+  v_ResultStr:= '' || SQLERRM;
+  DBMS_OUTPUT.PUT_LINE(v_ResultStr) ;
+  ROLLBACK;
+ r_error:= v_ResultStr || ': ' || p_attributo ;
+  RETURN;
+END ALMAC_ASIGNARANGO21
+]]></body>
+    </function>
+  </database>

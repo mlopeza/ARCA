@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE C_INVOICE">
+    <table name="C_INVOICE" primaryKey="C_INVOICE_KEY">
+      <column name="EM_COMPRA_LLEGOFACTURA" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_COMPRA_REFPAQUETERIA" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_COMPRA_REFBL" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_COMPRA_EMBARQUE_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_COMPRA_COPIAEMBARQUE" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_COMPRA_ORDER_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_COMPRA_ISNACIONAL" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <foreign-key foreignTable="COMPRA_EMBARQUE" name="EM_COMPRA_INVO_EMB_FK">
+        <reference local="EM_COMPRA_EMBARQUE_ID" foreign="COMPRA_EMBARQUE_ID"/>
+      </foreign-key>
+      <foreign-key foreignTable="C_ORDER" name="EM_COMPRA_INVO_ORD_FK">
+        <reference local="EM_COMPRA_ORDER_ID" foreign="C_ORDER_ID"/>
+      </foreign-key>
+    </table>
+  </database>

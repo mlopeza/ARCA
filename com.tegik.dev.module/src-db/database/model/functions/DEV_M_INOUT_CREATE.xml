@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION DEV_M_INOUT_CREATE">
+    <function name="DEV_M_INOUT_CREATE" type="NULL">
+      <parameter name="p_pinstance_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_inout_id" type="VARCHAR" mode="out">
+        <default/>
+      </parameter>
+      <parameter name="p_order_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_invoice_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_forcedelivery" type="CHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[BEGIN
+ DEV_INOUT_CREATE($1, $2, $3, $4, $5, NULL);
+END DEV_M_INOUT_CREATE
+]]></body>
+    </function>
+  </database>

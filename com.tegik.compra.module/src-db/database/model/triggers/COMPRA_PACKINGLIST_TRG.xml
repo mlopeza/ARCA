@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER COMPRA_PACKINGLIST_TRG">
+    <trigger name="COMPRA_PACKINGLIST_TRG" table="COMPRA_PACKINGLIST" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[/*************************************************************************
+* Creado por: Homero Hernandez Barrera 
+* Para: Tegik
+* Funcion: Trigger que actualiza M_ATTRIBUTESETINSTANCE_ID al insertar un
+* nuevo registro en la tabla compra_packinglist
+************************************************************************/
+
+v_respuesta VARCHAR(255);
+v_tileoslab  VARCHAR(32);
+v_status VARCHAR(5);
+        
+BEGIN
+
+	SELECT COALESCE(ESTADO, 'CL') INTO v_status FROM COMPRA_CONTENEDOR WHERE COMPRA_CONTENEDOR_ID = :NEW.COMPRA_CONTENEDOR_ID;
+	
+	IF (v_status NOT IN ('DR')) THEN
+		RAISE_APPLICATION_ERROR(-20000, 'No se puede insertar o actualizar si el contenedor no esta en borrador.');
+	END IF;
+
+	SELECT EM_DMPROD_TILEOSLAB INTO v_tileoslab FROM M_PRODUCT WHERE M_PRODUCT_ID = :NEW.M_PRODUCT_ID;
+
+	IF (INSERTING) THEN
+		IF(:NEW.M_ATTRIBUTESETINSTANCE_ID IS NULL OR CHAR_LENGTH(:NEW.M_ATTRIBUTESETINSTANCE_ID) <> 32) THEN
+			SELECT ALMAC_CREALOTE(:NEW.M_PRODUCT_ID) INTO v_respuesta;
+			IF (CHAR_LENGTH(v_respuesta) <> 32) THEN
+				RAISE_APPLICATION_ERROR(-20000, 'Error al crear lote, contacte al equipo de soporte -- ' || v_respuesta) ;
+				RETURN OLD;
+			ELSE
+				:NEW.M_ATTRIBUTESETINSTANCE_ID = v_respuesta;
+			END IF;
+		END IF;
+			
+	END IF;
+		
+	IF (v_tileoslab = 'Slab') THEN
+
+			IF (:NEW.ANCHO IS NULL) THEN
+				:NEW.ANCHO = 1;
+			END IF;
+		
+			IF (:NEW.ALTO IS NULL) THEN
+				:NEW.ALTO = 1;
+			END IF;
+				
+			:NEW.quantity = COALESCE(:NEW.ANCHO,1) * COALESCE(:NEW.ALTO,1);
+	END IF;
+	
+	UPDATE m_attributesetinstance 
+	SET em_almac_alto = :NEW.ALTO,
+	em_almac_ancho = :NEW.ANCHO
+	WHERE M_ATTRIBUTESETINSTANCE_ID = v_respuesta;
+
+	END COMPRA_PACKINGLIST_TRG
+]]></body>
+    </trigger>
+  </database>

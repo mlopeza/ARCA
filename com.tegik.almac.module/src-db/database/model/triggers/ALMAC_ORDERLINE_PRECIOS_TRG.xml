@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_ORDERLINE_PRECIOS_TRG">
+    <trigger name="ALMAC_ORDERLINE_PRECIOS_TRG" table="C_ORDERLINE" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[BEGIN IF AD_isTriggerEnabled () = 'N' THEN RETURN;
+	END IF;
+
+--Cantidad DIsponible en Almacenes
+--Monterrey
+SELECT COALESCE(ROUND(SUM(sd.qtyonhand),4),0) INTO :NEW.EM_Ventas_Disp_Mty
+FROM m_attributesetinstance asi 
+  LEFT JOIN m_storage_detail sd ON sd.m_attributesetinstance_id::text = asi.m_attributesetinstance_id::text AND round (sd.qtyonhand,4) > 0::NUMERIC AND asi.ad_client_id = '0BD13E24E0F94596B61414BD72225EB8' 
+  LEFT JOIN m_product p ON p.m_product_id::text = sd.m_product_id::text AND p.m_product_id IS NOT NULL 
+  LEFT JOIN m_locator l ON l.m_locator_id::text = sd.m_locator_id::text 
+  LEFT JOIN m_warehouse wh ON wh.m_warehouse_id::text = l.m_warehouse_id::text AND wh.em_almac_esmonterrey = 'Y'
+WHERE p.m_product_id IS NOT NULL AND wh.em_almac_esmonterrey IS NOT NULL
+AND   p.m_product_id = :NEW.m_product_id;
+--RAISE_APPLICATION_ERROR(-20000, 'Disponible Monterrey:'|| :NEW.EM_Ventas_Disp_Mty);
+--Cancun 
+SELECT COALESCE(ROUND(SUM(sd.qtyonhand),4),0) INTO :NEW.EM_Ventas_Disp_Cancun
+FROM m_attributesetinstance asi 
+  LEFT JOIN m_storage_detail sd ON sd.m_attributesetinstance_id::text = asi.m_attributesetinstance_id::text AND round (sd.qtyonhand,4) > 0::NUMERIC AND asi.ad_client_id = '0BD13E24E0F94596B61414BD72225EB8' 
+  LEFT JOIN m_product p ON p.m_product_id::text = sd.m_product_id::text AND p.m_product_id IS NOT NULL 
+  LEFT JOIN m_locator l ON l.m_locator_id::text = sd.m_locator_id::text 
+  LEFT JOIN m_warehouse wh ON wh.m_warehouse_id::text = l.m_warehouse_id::text AND wh.em_almac_escancun = 'Y'
+WHERE p.m_product_id IS NOT NULL AND wh.em_almac_escancun IS NOT NULL
+AND   p.m_product_id = :NEW.m_product_id;
+
+--Guadalajara
+SELECT COALESCE(ROUND(SUM(sd.qtyonhand),4),0) INTO :NEW.EM_Ventas_Disp_Gdl
+FROM m_attributesetinstance asi 
+  LEFT JOIN m_storage_detail sd ON sd.m_attributesetinstance_id::text = asi.m_attributesetinstance_id::text AND round (sd.qtyonhand,4) > 0::NUMERIC AND asi.ad_client_id = '0BD13E24E0F94596B61414BD72225EB8' 
+  LEFT JOIN m_product p ON p.m_product_id::text = sd.m_product_id::text AND p.m_product_id IS NOT NULL 
+  LEFT JOIN m_locator l ON l.m_locator_id::text = sd.m_locator_id::text 
+  LEFT JOIN m_warehouse wh ON wh.m_warehouse_id::text = l.m_warehouse_id::text AND wh.em_almac_esguadalajara = 'Y'
+WHERE p.m_product_id IS NOT NULL AND wh.em_almac_esguadalajara IS NOT NULL
+AND   p.m_product_id = :NEW.m_product_id;
+
+--DF
+SELECT COALESCE(ROUND(SUM(sd.qtyonhand),4),0) INTO :NEW.EM_Ventas_Disp_Df
+FROM m_attributesetinstance asi 
+  LEFT JOIN m_storage_detail sd ON sd.m_attributesetinstance_id::text = asi.m_attributesetinstance_id::text AND round (sd.qtyonhand,4) > 0::NUMERIC AND asi.ad_client_id = '0BD13E24E0F94596B61414BD72225EB8' 
+  LEFT JOIN m_product p ON p.m_product_id::text = sd.m_product_id::text AND p.m_product_id IS NOT NULL 
+  LEFT JOIN m_locator l ON l.m_locator_id::text = sd.m_locator_id::text 
+  LEFT JOIN m_warehouse wh ON wh.m_warehouse_id::text = l.m_warehouse_id::text AND wh.em_almac_esdf = 'Y'
+WHERE p.m_product_id IS NOT NULL AND wh.em_almac_esdf IS NOT NULL
+AND   p.m_product_id = :NEW.m_product_id;
+
+SELECT COALESCE(ROUND((conexDF.C1 / p.C2 + p.C3 + p.C4*(p.C3 +(conexDF.C5 / p.C2)) +0.008*(p.C3 +(conexDF.C5 / p.C2)) +0.01*(p.C3 +(conexDF.C5 / p.C2))) /(1.0000001 - pc.Margen_Minimo),4),0::NUMERIC),
+       COALESCE(ROUND((conexDF.C1 / p.C2 + p.C3 + p.C4*(p.C3 +(conexDF.C5 / p.C2)) +0.008*(p.C3 +(conexDF.C5 / p.C2)) +0.01*(p.C3 +(conexDF.C5 / p.C2))) /(1.0000001 - pc.Margen_Ideal),4),0::NUMERIC),
+       COALESCE(ROUND((conexMTY.C1 / p.C2 + p.C3 + p.C4*(p.C3 +(conexMTY.C5 / p.C2)) +0.008*(p.C3 +(conexMTY.C5 / p.C2)) +0.01*(p.C3 +(conexMTY.C5 / p.C2))) /(1.0000001 - pc.Margen_Minimo),4),0::NUMERIC),
+       COALESCE(ROUND((conexMTY.C1 / p.C2 + p.C3 + p.C4*(p.C3 +(conexMTY.C5 / p.C2)) +0.008*(p.C3 +(conexMTY.C5 / p.C2)) +0.01*(p.C3 +(conexMTY.C5 / p.C2))) /(1.00000001 - pc.Margen_Ideal),4),0::NUMERIC)
+       INTO :NEW.EM_Almac_Precio_Min_Df,:NEW.em_almac_precio_ideal_df,:NEW.EM_Ventas_Preciominimo,:NEW.EM_Ventas_Preciosugerido
+FROM (SELECT *,
+             24000::NUMERIC/(3000::NUMERIC*(COALESCE(product.em_dmprod_depth,0.00000000000001::NUMERIC)::NUMERIC)) AS C2,
+             COALESCE(product.em_almac_fob_usd,0::NUMERIC) AS C3,
+             CASE
+               WHEN ROUND(product.em_dmprod_arancel,4) = ROUND(0,4) THEN COALESCE(product.em_dmprod_arancel,0::NUMERIC)
+               ELSE ROUND(COALESCE(product.em_dmprod_arancel / 100,0::NUMERIC),4::NUMERIC)
+             END AS C4
+      FROM m_product product
+      WHERE product.m_product_id = :NEW.m_product_id
+      AND   (UPPER(product.em_dmprod_tileoslab::text) = ANY (ARRAY['TILE'::text,'SLAB'::text]))) p 
+  LEFT JOIN (SELECT *,
+                    CASE
+                      WHEN ROUND(category.EM_Almac_Margen_Minimo,4) = ROUND(0,4) THEN COALESCE(category.EM_Almac_Margen_Minimo,0::NUMERIC)
+                      ELSE ROUND(COALESCE(category.EM_Almac_Margen_Minimo / 100,0::NUMERIC),4::NUMERIC)
+                    END AS Margen_Minimo,
+                    CASE
+                      WHEN ROUND(category.EM_Almac_Margen_Ideal,4) = ROUND(0,4) THEN COALESCE(category.EM_Almac_Margen_Ideal,0::NUMERIC)
+                      ELSE ROUND(COALESCE(category.EM_Almac_Margen_Ideal / 100,0::NUMERIC),4::NUMERIC)
+                    END AS Margen_Ideal
+             FROM m_product_category category) pc ON p.m_product_category_id::text = pc.m_product_category_id::text AND p.ad_client_id = '0BD13E24E0F94596B61414BD72225EB8' 
+  LEFT JOIN (SELECT *,
+                    COALESCE((COALESCE(apc.maniobras,0::NUMERIC) + COALESCE(apc.honorarios,0::NUMERIC) + COALESCE(apc.tarifa_flete_terrestre,0::NUMERIC) + COALESCE(apc.tarifa_flete_mar_usd,0::NUMERIC)),0) AS C1,
+                    COALESCE(apc.tarifa_flete_mar_usd,0::NUMERIC) AS C5
+             FROM almac_conex_prod acp 
+               INNER JOIN almac_puertos_conexion apc ON apc.almac_puertos_conexion_id = acp.almac_puertos_conexion_id AND UPPER (TRIM (apc.name)) LIKE '%DF') AS conexDF ON conexDF.m_product_id = p.m_product_id 
+  LEFT JOIN (SELECT *,
+                    (COALESCE(apc.maniobras,0::NUMERIC) + COALESCE(apc.honorarios,0::NUMERIC) + COALESCE(apc.tarifa_flete_terrestre,0::NUMERIC) + COALESCE(apc.tarifa_flete_mar_usd,0::NUMERIC)) AS C1,
+                    COALESCE(apc.tarifa_flete_mar_usd,0::NUMERIC) AS C5
+             FROM almac_conex_prod acp 
+               INNER JOIN almac_puertos_conexion apc ON apc.almac_puertos_conexion_id = acp.almac_puertos_conexion_id AND UPPER (TRIM (apc.name)) LIKE '%MTY') AS conexMTY ON conexMTY.m_product_id = p.m_product_id
+;
+
+IF ROUND(COALESCE(:NEW.EM_Almac_Precio_Min_Df,0::NUMERIC),4) <=0 OR ROUND(COALESCE(:NEW.EM_Ventas_Preciominimo),4) <=0 OR ROUND(COALESCE(:NEW.em_almac_precio_ideal_df),4) <=0 OR ROUND(COALESCE(:NEW.EM_Ventas_Preciosugerido),4) <=0 
+	THEN
+	:NEW.EM_Almac_Precio_Min_Df = 0;
+	:NEW.EM_Ventas_Preciominimo = 0;
+	:NEW.em_almac_precio_ideal_df = 0;
+	:NEW.EM_Ventas_Preciosugerido = 0;
+END IF;
+
+--Si son NULL Despues de esto, se ponen como 0
+:NEW.EM_Ventas_Disp_Mty = COALESCE(:NEW.EM_Ventas_Disp_Mty,0::NUMERIC);
+:NEW.EM_Ventas_Disp_Df = COALESCE(:NEW.EM_Ventas_Disp_Df,0::NUMERIC);
+:NEW.EM_Ventas_Disp_Gdl = COALESCE(:NEW.EM_Ventas_Disp_Gdl,0::NUMERIC);
+:NEW.EM_Ventas_Disp_Cancun = COALESCE(:NEW.EM_Ventas_Disp_Cancun,0::NUMERIC);
+
+END ALMAC_ORDERLINE_PRECIOS_TRG
+]]></body>
+    </trigger>
+  </database>

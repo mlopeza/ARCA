@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_RESERVA_MERCANCIA">
+    <function name="ALMAC_RESERVA_MERCANCIA" type="VARCHAR">
+      <parameter name="p_asi_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_num_ped_cot" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_org_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_username" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_ped_cot" type="CHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[v_pedido varchar(1) := NULL;
+v_cotizacion varchar(1) := NULL;
+v_peco varchar(2) := NULL;
+v_picke_id varchar(32) :=NULL; --OBTG:VARCHAR2--
+v_asi VARCHAR2(32) := NULL;
+v_user_id VARCHAR2(32) := NULL;
+v_num VARCHAR2(255) := NULL;
+BEGIN 
+	--No permite nungun parametro Nulo
+	IF p_asi_id is null or p_num_ped_cot is null or p_ped_cot is null  or p_org_id is null THEN
+		RAISE_APPLICATION_ERROR(-20000, 'Ningún parametro puede ser nulo.');
+	ELSIF char_length(p_asi_id) <> 32 THEN
+		RAISE_APPLICATION_ERROR(-20000, 'El ID del Huacal o Slab es invalido.(Debe ser igual a 32 caracteres)');
+	ELSIF  char_length(p_org_id) <> 32 THEN
+		RAISE_APPLICATION_ERROR(-20000, 'El ID de la Organización es invalido.(Debe ser igual a 32 caracteres)');
+	END IF;
+
+	--Busca el Usuario en la base de datos
+	-- Si no lo encuentra manda error, si mandan null el usuario sera el sistema
+	IF p_username IS NULL THEN
+		v_user_id = '100';
+	ELSE
+		SELECT ad_user_id INTO v_user_id from ad_user where TRIM(username) = TRIM(p_username);
+		IF v_user_id IS NULL THEN
+			RAISE_APPLICATION_ERROR(-20000, 'No se encontró el usuario en el sistema. username:<'||p_username||'>');
+		END IF;
+	END IF;
+
+	--Busca si existe algun pedido o cotizacion
+	SELECT asi.m_attributesetinstance_id,UPPER(COALESCE(asi.em_almac_reservapedido,'N')),UPPER(COALESCE(asi.em_almac_reservacotizacion,'N')),vp.pedido_cotizacion
+	INTO v_asi,v_pedido,v_cotizacion,v_num
+	FROM m_attributesetinstance asi
+	LEFT JOIN ventas_pickexecute vp ON vp.ventas_pickexecute_id = asi.em_ventas_pickexecute_id AND p_asi_id = asi.m_attributesetinstance_id
+	WHERE p_asi_id = asi.m_attributesetinstance_id;
+
+	--Si no existe el ASI
+	IF v_asi IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'No se encontró el huacal o slab con id: <'||p_asi_id||'>.');
+	END IF;
+
+	--Valida si no existe una cotizacion o pedido ya hechos
+	IF v_pedido = 'Y' THEN
+		RAISE_APPLICATION_ERROR(-20000, 'Ya se encuentra reservado por el numero de pedido <'||v_num||'>.');
+	ELSIF v_cotizacion = 'Y' THEN
+		RAISE_APPLICATION_ERROR(-20000, 'Ya se encuentra reservado por el numero de cotización <'||v_num||'>.');
+	END IF;
+
+
+	--Verifica si es pedido o cotizacion
+	IF UPPER(p_ped_cot) = 'P' THEN
+		v_peco = 'PE';
+	ELSIF UPPER(p_ped_cot) = 'C' THEN
+		v_peco = 'CO';
+	ELSE
+		RAISE_APPLICATION_ERROR(-20000, 'Acción Invalida en el argumento de cotizacion/pedido  arg:<'||p_ped_cot||'>.');
+	END IF;
+	
+	--Verifica que exista la cotizacion o pedido, si no la crea.
+	SELECT ventas_pickexecute_id INTO v_picke_id FROM ventas_pickexecute where pedido_cotizacion = p_num_ped_cot and accion = v_peco;
+
+	--Inserta el nuevo pedido o cotizacion si no existen o lo actualiza en caso de que exista
+	IF v_picke_id IS NULL THEN
+		v_picke_id = get_uuid();
+		INSERT INTO ventas_pickexecute(ventas_pickexecute_id,ad_client_id,ad_org_id,isactive,created,createdby,updated,updatedby,pedido_cotizacion,description,pick,borrar,copiar,accion)
+		VALUES (v_picke_id,'0BD13E24E0F94596B61414BD72225EB8',p_org_id,'Y',now(),v_user_id,now(),v_user_id,p_num_ped_cot,'Cotización por Front End','N','N','N',v_peco);
+	END IF;
+		
+
+	--Ejecuta la accion de reservar el pedido o cotizacion
+	IF UPPER(p_ped_cot) = 'P' THEN
+		UPDATE m_attributesetinstance set em_almac_reservapedido = 'Y',em_almac_reservacotizacion='N',em_ventas_pickexecute_id=v_picke_id,updated=now(), updatedby=v_user_id where m_attributesetinstance_id = v_asi;
+	ELSIF UPPER(p_ped_cot) = 'C' THEN
+		UPDATE m_attributesetinstance set em_almac_reservapedido = 'N',em_almac_reservacotizacion='Y',em_ventas_pickexecute_id=v_picke_id,updated=now(), updatedby=v_user_id where m_attributesetinstance_id = v_asi;
+	END IF;
+
+	--Termina la ejeucion
+	RETURN 'OK';
+EXCEPTION 
+WHEN OTHERS THEN
+  RAISE;
+END ALMAC_RESERVA_MERCANCIA
+]]></body>
+    </function>
+  </database>

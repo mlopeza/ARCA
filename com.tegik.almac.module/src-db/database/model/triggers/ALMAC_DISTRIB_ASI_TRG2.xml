@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_DISTRIB_ASI_TRG2">
+    <trigger name="ALMAC_DISTRIB_ASI_TRG2" table="ALMAC_DISTRIB" fires="after" insert="true" update="true" delete="true" foreach="row">
+      <body><![CDATA[ 
+v_iol  VARCHAR(32);
+v_suma NUMBER;
+        
+BEGIN
+    
+
+	IF DELETING THEN
+		v_iol = :OLD.M_INOUTLINE_ID;
+	ELSE
+		v_iol = :NEW.M_INOUTLINE_ID;
+	END IF;
+
+	SELECT SUM(MOVEMENTQTY) INTO v_suma FROM ALMAC_DISTRIB WHERE M_INOUTLINE_ID = v_iol;
+
+	UPDATE M_INOUTLINE SET EM_ALMAC_QTYASIGNADA = COALESCE(v_suma,0) WHERE M_INOUTLINE_ID = v_iol;
+	
+	END ALMAC_DISTRIB_ASI_TRG2
+]]></body>
+    </trigger>
+  </database>

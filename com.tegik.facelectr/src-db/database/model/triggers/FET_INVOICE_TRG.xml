@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER FET_INVOICE_TRG">
+    <trigger name="FET_INVOICE_TRG" table="C_INVOICE" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[ nuevo_correo VARCHAR;
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+  SELECT U.email INTO nuevo_correo FROM AD_USER U, C_INVOICE I WHERE U.ad_user_id = I.ad_user_id AND I.c_invoice_id = :NEW.c_invoice_id;
+
+  :NEW.em_fet_correoelectronico = nuevo_correo;
+
+END FET_INVOICE_TRG
+]]></body>
+    </trigger>
+  </database>

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION VENTAS_ROUND_ABAJO">
+    <function name="VENTAS_ROUND_ABAJO" type="NUMERIC">
+      <parameter name="p_numero" type="NUMERIC" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[rounded_number NUMBER;
+
+        
+BEGIN
+  rounded_number := ROUND( p_numero );
+  IF rounded_number = p_numero + 0.5 THEN
+
+    rounded_number := rounded_number - 1;
+
+  END IF;
+
+  RETURN rounded_number;
+END VENTAS_ROUND_ABAJO
+]]></body>
+    </function>
+  </database>

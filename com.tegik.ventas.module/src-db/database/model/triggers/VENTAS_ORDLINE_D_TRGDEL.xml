@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_ORDLINE_D_TRGDEL">
+    <trigger name="VENTAS_ORDLINE_D_TRGDEL" table="VENTAS_ORDLINE_DETAIL" fires="before" insert="false" update="false" delete="true" foreach="row">
+      <body><![CDATA[ 
+v_ol  VARCHAR(32);
+v_suma NUMBER;
+v_suma2 NUMBER;
+docstatus NUMBER; 
+v_auxdocuments NUMBER; 
+v_order_id VARCHAR(32); 
+      
+BEGIN
+    
+
+	IF DELETING THEN
+
+		IF :OLD.status NOT IN ('L') THEN
+		 RAISE_APPLICATION_ERROR(-20000, 'La mercancía ya se encuentra factrada y/o enviada.');
+		 RETURN OLD;
+		END IF;
+			
+END IF;
+
+	
+	
+	END VENTAS_ORDLINE_D_TRGDEL
+]]></body>
+    </trigger>
+  </database>

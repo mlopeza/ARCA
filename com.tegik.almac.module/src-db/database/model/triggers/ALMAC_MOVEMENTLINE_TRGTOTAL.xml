@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_MOVEMENTLINE_TRGTOTAL">
+    <trigger name="ALMAC_MOVEMENTLINE_TRGTOTAL" table="M_MOVEMENTLINE" fires="after" insert="true" update="true" delete="true" foreach="row">
+      <body><![CDATA[
+v_cuenta NUMBER;
+v_totalM2 NUMBER;
+v_tiles NUMBER;
+v_totalPlacas NUMBER:=0;
+v_totalTiles NUMBER:=0;
+v_issotrx VARCHAR(1);
+v_mov VARCHAR(32);
+v_product_id VARCHAR(32);
+v_tileoslab VARCHAR(60);
+v_area NUMBER;
+Cur_Line RECORD;
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+  IF DELETING THEN
+	v_mov = :OLD.M_MOVEMENT_ID;
+	v_product_id=:OLD.m_product_id;
+  ELSE
+	v_mov = :NEW.M_MOVEMENT_ID;
+	v_product_id=:NEW.m_product_id;
+  END IF;
+
+  -- Totalizado en M2
+  SELECT SUM(COALESCE(movementqty,0)) INTO v_totalM2 FROM M_MOVEMENTLINE WHERE M_MOVEMENT_ID = v_mov;
+
+  -- Totalizado en Placas
+  FOR Cur_Line IN (SELECT * FROM M_MOVEMENTLINE 
+  WHERE M_MOVEMENT_ID = v_mov
+  )LOOP
+	  SELECT EM_DMPROD_TILEOSLAB INTO v_tileoslab FROM M_PRODUCT WHERE M_PRODUCT_ID=Cur_Line.m_product_id;
+
+	  IF v_tileoslab='Slab' THEN
+	  
+	  v_totalPlacas:=v_totalPlacas+1;
+
+	  END IF;
+	  
+	  IF v_tileoslab='Tile' THEN
+	  
+
+		  SELECT em_dmprod_height*em_dmprod_width INTO v_area
+		  FROM m_product WHERE M_PRODUCT_ID=Cur_Line.m_product_id;
+
+			IF v_area > 0 THEN
+
+				SELECT ROUND(COALESCE(MOVEMENTQTY,0)/v_area,0) INTO v_tiles  FROM M_MOVEMENTLINE 
+				WHERE M_MOVEMENTLINE_ID = Cur_Line.M_MOVEMENTLINE_ID ;
+
+				v_totalTiles:=v_totalTiles+v_tiles;
+				
+			END IF;
+
+	  END IF;
+  
+  END LOOP;
+
+  UPDATE M_MOVEMENT 
+  SET   EM_ALMAC_M2TOTAL = v_totalM2, 
+	EM_ALMAC_PLACASTOTAL = v_totalPlacas,
+	EM_ALMAC_TILESTOTAL = v_totalTiles
+  WHERE M_MOVEMENT_ID = v_mov;
+  
+END ALMAC_MOVEMENTLINE_TRGTOTAL
+]]></body>
+    </trigger>
+  </database>

@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE M_PRODUCTIONLINE">
+    <table name="M_PRODUCTIONLINE" primaryKey="M_PRODUCTIONLINE_KEY">
+      <column name="EM_PROD_TIMESPENT" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_PROD_COSTSUBCONTRACT" primaryKey="false" required="false" type="DECIMAL" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+    </table>
+  </database>

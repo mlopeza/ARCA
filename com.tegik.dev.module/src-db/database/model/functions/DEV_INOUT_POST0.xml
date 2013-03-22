@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION DEV_INOUT_POST0">
+    <function name="DEV_INOUT_POST0" type="NULL">
+      <parameter name="pinstance_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[BEGIN
+  DEV_INOUT_POST(PInstance_ID, NULL) ;
+END DEV_INOUT_POST0
+]]></body>
+    </function>
+  </database>

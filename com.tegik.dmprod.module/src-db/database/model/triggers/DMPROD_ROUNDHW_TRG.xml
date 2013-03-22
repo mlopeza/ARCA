@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER DMPROD_ROUNDHW_TRG">
+    <trigger name="DMPROD_ROUNDHW_TRG" table="M_PRODUCT" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[
+   TYPE RECORD IS REF CURSOR;
+   Cur_Defaults RECORD;
+
+  			
+BEGIN
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+DBMS_OUTPUT.PUT_LINE(:NEW.name);
+	:NEW.em_dmprod_height:=ROUND(:NEW.em_dmprod_height,8);
+	:NEW.em_dmprod_width:=ROUND(:NEW.em_dmprod_width,8);
+ 
+EXCEPTION
+ WHEN NO_DATA_FOUND THEN
+  RAISE_APPLICATION_ERROR(-20009, 'M_Product InsertTrigger Error: No ClientInfo or parent TreeNode');
+
+END DMPROD_ROUNDHW_TRG
+]]></body>
+    </trigger>
+  </database>

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="COMPRA_Sugerido" pageWidth="595" pageHeight="842" orientation="Landscape" whenNoDataType="NoDataSection" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="Title" forecolor="#FFFFFF" fontName="Times New Roman" fontSize="50" isBold="false" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#CCCCCC" fontName="Times New Roman" fontSize="18" isBold="false" pdfFontName="Times-Roman"/>
+	<style name="Column header" forecolor="#666666" fontName="Times New Roman" fontSize="14" isBold="true" pdfFontName="Times-Roman"/>
+	<style name="Detail" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman"/>
+	<style name="Row" mode="Transparent" fontName="Times New Roman" pdfFontName="Times-Roman">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style mode="Opaque" backcolor="#ACC5D7"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="BASE_WEB" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["/opt/OpenbravoERP-3.0/openbravo-erp/web"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="USER_ORG" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="USER_CLIENT" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="prod_id" class="java.lang.String">
+		<defaultValueExpression><![CDATA[""]]></defaultValueExpression>
+	</parameter>
+	<parameter name="aux_prod_id" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA[$P{prod_id}.equals("") ? " ": " AND p.m_product_id = '" + $P{prod_id} + "'"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT producto,
+       backorder
+FROM (SELECT x.m_product_id,
+             x.NAME AS producto,
+             CASE
+               WHEN COALESCE(X.ORDENADO,0) - COALESCE(X.RESERVADO,0) - COALESCE(d.cantidad,0) < 0 THEN 0
+               ELSE COALESCE(X.ORDENADO,0) - COALESCE(X.RESERVADO,0) - COALESCE(d.cantidad,0)
+             END AS BACKORDER
+      FROM (SELECT o.ad_client_id,
+                   OL.M_PRODUCT_ID,
+                   p.name,
+                   COALESCE(SUM(OL.QTYORDERED - OL.QTYDELIVERED),0) AS ORDENADO,
+                   COALESCE(SUM(A.QTY - OL.QTYDELIVERED),0) AS RESERVADO
+            FROM C_ORDERLINE OL
+              INNER JOIN C_ORDER O ON O.C_ORDER_ID = OL.C_ORDER_ID AND O.DOCSTATUS IN ('IP','CO') AND O.ISSOTRX = 'Y'
+              INNER JOIN m_product p ON ol.m_product_id = p.m_product_id AND p.issold = 'Y' AND p.em_dmprod_tileoslab IS NOT NULL $P!{aux_prod_id}
+              INNER JOIN (SELECT OL2.C_ORDERLINE_ID,
+                                 SUM(COALESCE(OLDD.QTY,0)) AS QTY
+                          FROM C_ORDERLINE OL2
+                            LEFT JOIN VENTAS_ORDLINE_DETAIL OLDD ON OL2.C_ORDERLINE_ID = OLDD.C_ORDERLINE_ID
+                          GROUP BY OL2.C_ORDERLINE_ID) A ON OL.C_ORDERLINE_ID = A.C_ORDERLINE_ID
+            GROUP BY o.ad_client_id,
+                     OL.M_PRODUCT_ID,
+                     p.name) x
+        LEFT JOIN (SELECT p.m_product_id,
+                          SUM(cantidad) AS cantidad
+                   FROM compra_desgcont dc
+                     INNER JOIN compra_contenedor c ON dc.compra_contenedor_id = c.compra_contenedor_id
+                     LEFT JOIN compra_embarque e ON c.compra_embarque_id = e.compra_embarque_id
+                     LEFT JOIN c_invoice i ON c.compra_embarque_id = i.em_compra_embarque_id AND i.docstatus = 'CO'
+                     INNER JOIN c_orderline ol ON dc.c_orderline_id = ol.c_orderline_id
+                     INNER JOIN c_order o ON ol.c_order_id = o.c_order_id
+                     LEFT JOIN m_inout io ON (c.compra_contenedor_id = io.em_compra_contenedor_id OR (o.c_order_id = io.c_order_id AND o.em_compra_isnacional = 'Y')) AND io.docstatus IN ('DR','CO')
+                     INNER JOIN m_product p ON ol.m_product_id = p.m_product_id AND p.issold = 'Y' AND p.em_dmprod_tileoslab IS NOT NULL $P!{aux_prod_id}
+                   WHERE o.docstatus = 'CO'
+                   AND   COALESCE(io.docstatus,'NA') NOT IN ('CO','VO')
+                   AND   dc.ad_client_id IN ($P!{USER_CLIENT})
+                   GROUP BY p.m_product_id) d ON x.m_product_id = d.m_product_id
+      WHERE x.ad_client_id IN ($P!{USER_CLIENT})
+      ORDER BY backorder) Z
+WHERE backorder > 0]]>
+	</queryString>
+	<field name="producto" class="java.lang.String"/>
+	<field name="backorder" class="java.math.BigDecimal"/>
+	<variable name="org_id" class="java.lang.String">
+		<variableExpression><![CDATA[]]></variableExpression>
+		<initialValueExpression><![CDATA[new String($P{USER_ORG}).split(",")[1].substring(1,33)]]></initialValueExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="130" splitType="Stretch">
+			<staticText>
+				<reportElement x="172" y="0" width="256" height="30" forecolor="#00447B"/>
+				<textElement textAlignment="Center">
+					<font size="24"/>
+				</textElement>
+				<text><![CDATA[Sugerido de compra]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="407" y="113" width="144" height="15" forecolor="#063167"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="12"/>
+				</textElement>
+				<textFieldExpression class="java.util.Date"><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<image hAlign="Right" isUsingCache="true">
+				<reportElement x="0" y="0" width="170" height="91" isRemoveLineWhenBlank="true"/>
+				<imageExpression class="java.awt.Image"><![CDATA[org.openbravo.erpCommon.utility.Utility.showImageLogo("yourcompanydoc",$V{org_id})]]></imageExpression>
+			</image>
+		</band>
+	</title>
+	<columnHeader>
+		<band height="27" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="551" height="2" forecolor="#00447B" backcolor="#00447B"/>
+			</frame>
+			<frame>
+				<reportElement mode="Opaque" x="0" y="23" width="551" height="2" forecolor="#000000" backcolor="#00447B"/>
+			</frame>
+			<staticText>
+				<reportElement style="Column header" x="15" y="4" width="362" height="18" forecolor="#000000"/>
+				<textElement>
+					<font fontName="SansSerif" size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Producto]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="377" y="4" width="155" height="18" forecolor="#000000"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif" size="12" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Backorder]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="18" splitType="Stretch">
+			<frame>
+				<reportElement style="Row" mode="Opaque" x="1" y="0" width="551" height="18" forecolor="#000000"/>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+					<reportElement style="Detail" positionType="Float" x="15" y="0" width="362" height="18"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="SansSerif" size="12"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[$F{producto}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true" pattern="###0.0000" isBlankWhenNull="true">
+					<reportElement style="Detail" positionType="Float" x="377" y="0" width="155" height="18"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="SansSerif" size="12"/>
+					</textElement>
+					<textFieldExpression class="java.math.BigDecimal"><![CDATA[$F{backorder}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="37" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="0" y="0" width="170" height="37" forecolor="#00447B" backcolor="#00447B"/>
+				<textField evaluationTime="Report">
+					<reportElement style="Column header" x="74" y="7" width="62" height="20" forecolor="#FFFFFF"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="SansSerif" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA[" de " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<elementGroup/>
+				<textField>
+					<reportElement style="Column header" x="0" y="7" width="74" height="20" forecolor="#FFFFFF"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font fontName="Monospaced" size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression class="java.lang.String"><![CDATA["Página "+$V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+	<noData>
+		<band height="94">
+			<staticText>
+				<reportElement x="96" y="33" width="362" height="30" forecolor="#010101"/>
+				<textElement textAlignment="Center">
+					<font size="24"/>
+				</textElement>
+				<text><![CDATA[No se encontraron resultados]]></text>
+			</staticText>
+		</band>
+	</noData>
+</jasperReport>

@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_ORDERLINE_TRG">
+    <trigger name="VENTAS_ORDERLINE_TRG" table="C_ORDERLINE" fires="after" insert="true" update="true" delete="true" foreach="row">
+      <body><![CDATA[
+  v_order VARCHAR2(32);
+  v_totalfac NUMBER;
+
+BEGIN
+    
+	IF (DELETING) THEN
+		v_order = :OLD.C_ORDER_ID;
+	ELSE
+		v_order = :NEW.C_ORDER_ID;
+	END IF;
+
+	SELECT COALESCE(SUM(EM_VENTAS_QTYFACTURAREAL * PRICEACTUAL * (1+RATE/100)),0) 
+	INTO v_totalfac 
+	FROM C_ORDERLINE 
+	INNER JOIN C_TAX ON C_ORDERLINE.C_TAX_ID = C_TAX.C_TAX_ID 
+	WHERE C_ORDER_ID = v_order;
+
+	UPDATE C_ORDER SET EM_VENTAS_TOTALFACT = v_totalfac WHERE C_ORDER_ID = v_order;
+
+END VENTAS_ORDERLINE_TRG
+]]></body>
+    </trigger>
+  </database>

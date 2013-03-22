@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_ASI_TRG">
+    <trigger name="ALMAC_ASI_TRG" table="M_ATTRIBUTESETINSTANCE" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[ v_caracteres NUMBER;
+ v_numero VARCHAR(32);
+ v_cadena VARCHAR(32);
+ v_caracter VARCHAR(1);
+ v_contador INTEGER;
+    
+BEGIN
+    
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+		
+	:NEW.em_almac_descriptionmedidas = :NEW.EM_ALMAC_ALTO || ' X ' || :NEW.EM_ALMAC_ANCHO;
+
+	select char_length(:NEW.DESCRIPTION) INTO v_caracteres;
+	
+	v_contador = 0;
+		
+	DBMS_OUTPUT.PUT_LINE( 'v_caracteres: // ' || v_caracteres);
+
+	WHILE v_contador <= v_caracteres LOOP
+		DBMS_OUTPUT.PUT_LINE( 'v_contador: // ' || v_contador);
+		v_caracter = substring(:NEW.DESCRIPTION from v_contador for 1);
+		DBMS_OUTPUT.PUT_LINE( v_caracter);
+		IF (ventas_esdigito(v_caracter)) THEN
+			v_numero = COALESCE(v_numero, '') || v_caracter;
+		ELSE
+			v_cadena = COALESCE(v_cadena, '') || v_caracter;
+		END IF;
+
+		v_contador = v_contador + 1;
+			
+	END LOOP;
+	
+	:NEW.EM_ALMAC_PREFIJO = v_cadena;
+	:NEW.EM_ALMAC_NUMERO = v_numero::numeric;
+
+	:NEW.AD_ORG_ID = '0';
+	
+
+END ALMAC_ASI_TRG
+]]></body>
+    </trigger>
+  </database>

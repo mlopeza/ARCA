@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_PRODUCTIONLINE_TRG">
+    <trigger name="ALMAC_PRODUCTIONLINE_TRG" table="M_PRODUCTIONLINE" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[
+  /*************************************************************************
+  * Carlos Salinas
+  *************************************************************************/
+    
+BEGIN
+    
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+
+	IF (:NEW.PRODUCTIONTYPE = '-') THEN
+	--	NEW.M_ATTRIBUTESETINSTANCE_ID = NEW.EM_ALMAC_ASI_ID;
+	END IF;
+  
+END ALMAC_PRODUCTIONLINE_TRG
+]]></body>
+    </trigger>
+  </database>

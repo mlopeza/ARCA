@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION VENTAS_MONTO_ANTICIPO">
+    <function name="VENTAS_MONTO_ANTICIPO" type="NUMERIC">
+      <parameter name="monto" type="NUMERIC" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_invoice_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_order_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[/*************************************************************************
+* The contents of this file are subject to the Compiere Public
+* License 1.1 ("License"); You may not use this file except in
+* compliance with the License. You may obtain a copy of the License in
+* the legal folder of your Openbravo installation.
+* Software distributed under the License is distributed on an
+* "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+* implied. See the License for the specific language governing rights
+* and limitations under the License.
+* The Original Code is  Compiere  ERP &  Business Solution
+* The Initial Developer of the Original Code is Jorg Janke and ComPiere, Inc.
+* Portions created by Jorg Janke are Copyright (C) 1999-2001 Jorg Janke,
+* parts created by ComPiere are Copyright (C) ComPiere, Inc.;
+* All Rights Reserved.
+* Contributor(s): Openbravo SLU
+* Contributions are Copyright (C) 2001-2010 Openbravo, S.L.U.
+*
+* Specifically, this derivative work is based upon the following Compiere
+* file and version.
+*************************************************************************
+* $Id: C_Currency_Convert.sql,v 1.8 2003/03/17 20:32:24 jjanke Exp $
+***
+* Title: Convert Amount (using IDs)
+* Description:
+*  from CurrencyFrom_ID to CurrencyTo_ID
+*  Returns NULL, if conversion not found
+*  Standard Rounding
+* Test:
+*  SELECT C_Currency_Convert(100,116,100,null,null) FROM DUAL => 64.72
+************************************************************************/
+  v_tipocambio NUMBER;
+  v_currencyOrder VARCHAR(32);
+  v_currencyInvoice VARCHAR(32);
+BEGIN
+
+	SELECT C_CURRENCY_ID INTO v_currencyOrder FROM C_ORDER WHERE C_ORDER_ID = p_order_id;
+	SELECT C_CURRENCY_ID INTO v_currencyInvoice FROM C_INVOICE WHERE C_INVOICE_ID = p_invoice_id;
+
+	IF (v_currencyOrder = v_currencyInvoice) THEN
+		RETURN monto;
+	ELSE
+		SELECT em_ventas_tcanticipo INTO v_tipocambio FROM c_invoice where c_invoice_id = p_invoice_id;
+		RETURN monto / v_tipocambio;
+	END IF;
+	
+EXCEPTION WHEN OTHERS THEN
+  DBMS_OUTPUT.PUT_LINE(SQLERRM) ;
+  RAISE;
+END VENTAS_MONTO_ANTICIPO
+]]></body>
+    </function>
+  </database>

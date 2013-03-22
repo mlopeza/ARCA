@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_INOUT_TRGDET">
+    <trigger name="VENTAS_INOUT_TRGDET" table="M_INOUT" fires="after" insert="true" update="false" delete="false" foreach="row">
+      <body><![CDATA[CUR_DETALLE RECORD;
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+  FOR CUR_DETALLE IN (SELECT COALESCE(NUMERO, 1) || ') ' || DESCRIPTION AS TEXTO, NUMERO FROM VENTAS_CONDICIONES WHERE ESREMISION = 'Y' AND AD_CLIENT_ID = :NEW.AD_CLIENT_ID)
+
+	LOOP
+		INSERT INTO ventas_condicionesdet(
+		ventas_condicionesdet_id, ad_client_id, ad_org_id, isactive, 
+		created, createdby, updated, updatedby, description, c_invoice_id, 
+		m_inout_id, c_order_id, NUMERO)
+		VALUES (GET_UUID(), :NEW.ad_client_id, :NEW.ad_org_id, :NEW.isactive, 
+		:NEW.created, :NEW.createdby, :NEW.updated, :NEW.updatedby, CUR_DETALLE.TEXTO, NULL, 
+		:NEW.M_INOUT_ID, NULL, CUR_DETALLE.NUMERO);
+
+	END LOOP;
+  
+END VENTAS_INOUT_TRGDET
+]]></body>
+    </trigger>
+  </database>

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE M_ATTRIBUTESETINSTANCE">
+    <table name="M_ATTRIBUTESETINSTANCE" primaryKey="M_ATTRIBUTESETINSTANCE_KEY">
+      <column name="EM_VENTAS_PICKEXECUTE_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+    </table>
+  </database>

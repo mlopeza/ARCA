@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION VENTAS_ESDIGITO">
+    <function name="VENTAS_ESDIGITO" type="VARCHAR">
+      <parameter name="p_entrada" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[v_salida boolean;
+  BEGIN
+   select p_entrada ~ '(-)?[0-9]+' INTO v_salida;
+   return v_salida;
+
+EXCEPTION
+WHEN OTHERS THEN
+  RAISE;
+END VENTAS_ESDIGITO
+]]></body>
+    </function>
+  </database>

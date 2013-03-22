@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_PRODUCT_TS_TRG">
+    <trigger name="ALMAC_PRODUCT_TS_TRG" table="M_PRODUCT" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[ v_name VARCHAR(60);    
+BEGIN
+    
+    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    END IF;
+    
+	--Si no tiene el attributeset no hace nada
+	IF :NEW.m_attributeset_id IS NULL THEN
+		RETURN NEW;
+	END IF;	
+	--Busca el Attribute SET
+	SELECT TRIM(UPPER(NAME)) INTO v_name FROM M_ATTRIBUTESET WHERE M_ATTRIBUTESET_ID = :NEW.m_attributeset_id;
+
+	--Asigna Tile o Slab
+	IF v_name = 'TILE' THEN
+		:NEW.em_dmprod_tileoslab = 'Tile';
+	ELSIF v_name = 'SLAB' THEN
+		:NEW.em_dmprod_tileoslab = 'Slab';
+	END IF;
+
+END ALMAC_PRODUCT_TS_TRG
+]]></body>
+    </trigger>
+  </database>

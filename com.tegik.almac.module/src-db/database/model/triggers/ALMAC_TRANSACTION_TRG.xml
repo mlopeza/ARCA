@@ -1,0 +1,168 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_TRANSACTION_TRG">
+    <trigger name="ALMAC_TRANSACTION_TRG" table="M_TRANSACTION" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[/*************************************************************************
+***Tegik
+************************************************************************/
+
+v_mensaje VARCHAR(3000);
+v_tileoslab VARCHAR(10);
+v_reservadas NUMBER;
+v_qtysd NUMBER;
+v_documentno VARCHAR (60);
+v_prodName VARCHAR (60);
+v_asiName VARCHAR (255);
+v_orderline_id VARCHAR(32);
+v_ligada NUMBER;
+v_enviadas NUMBER;
+v_descripcion VARCHAR(32);
+v_parar VARCHAR(1);
+BEGIN
+     
+	IF AD_isTriggerEnabled()='N' THEN RETURN;
+	END IF;
+
+	SELECT EM_DMPROD_TILEOSLAB, NAME INTO v_tileoslab, v_prodName FROM M_PRODUCT WHERE M_PRODUCT_ID = :NEW.M_PRODUCT_ID;
+
+        SELECT DESCRIPTION INTO v_asiName FROM M_ATTRIBUTESETINSTANCE WHERE M_ATTRIBUTESETINSTANCE_ID = :NEW.M_ATTRIBUTESETINSTANCE_ID;
+
+
+	
+--AGREGADO MALCOLM 08/03/2012
+
+--C+ (Customer Returns)
+--C- (Customer Shipment) REMISION SALIDA
+--D+ (Internal Consumption +) NO SE
+--D- (Internal Consumption -) NO SE
+--I+ (Inventory In) 
+--I- (Inventory Out) REMISION SALIDA
+--M+ (Movement To) MOVIMIENTO
+--M- (Movement From)
+--P+ (Production +) NO SE
+--P- (Production -)
+--V+ (Vendor Receipts)
+--V- (Vendor Returns)
+--W+ (Work Order +)
+--W- (Work Order -)
+
+--IF 'a'='b' THEN
+IF UPDATING THEN
+	IF (:NEW.MOVEMENTQTY <> :OLD.MOVEMENTQTY) THEN
+		v_parar = 'Y';
+	ELSE
+		v_parar = 'N';
+	END IF;
+ELSE
+	v_parar = 'N';
+END IF;
+
+IF v_parar = 'Y' THEN
+	IF v_tileoslab IS NOT NULL THEN
+		
+		IF UPPER(v_tileoslab) = 'SLAB' THEN
+		
+			SELECT COUNT(*) INTO v_reservadas 
+			FROM ventas_ordline_detail  
+			WHERE m_attributesetinstance_id=:NEW.m_attributesetinstance_id
+			--AND m_product_id=NEW.m_product_id
+			;
+			IF v_reservadas <> 0 THEN
+
+				SELECT o.documentno,ol.c_orderline_id  INTO v_documentno, v_orderline_id
+				FROM ventas_ordline_detail oldd
+				INNER JOIN c_orderline ol ON oldd.c_orderline_id=ol.c_orderline_id
+				INNER JOIN c_order o ON ol.c_order_id=o.c_order_id and o.docstatus = 'CO'
+				WHERE oldd.m_attributesetinstance_id=:NEW.m_attributesetinstance_id
+				--AND oldd.m_product_id=NEW.m_product_id
+				;
+
+				SELECT DESCRIPTION into v_descripcion FROM M_ATTRIBUTESETINSTANCE WHERE M_ATTRIBUTESETINSTANCE_ID = :NEW.M_ATTRIBUTESETINSTANCE_ID;
+
+				IF :NEW.movementType='C-' THEN
+					SELECT count(*) INTO v_ligada FROM m_inoutline WHERE c_orderline_id=v_orderline_id;
+					IF v_ligada=0 THEN
+						RAISE_APPLICATION_ERROR(-20000, 'La pieza ' || v_descripcion || ' ya se encuentra reservada en una órden: '||v_documentno);
+					END IF;
+				ELSE
+					RAISE_APPLICATION_ERROR(-20000, 'La pieza ' || v_descripcion || ' ya se encuentra reservada en una órden: '||v_documentno);
+				END IF;
+			END IF;
+		ELSE
+			SELECT sum(qty) INTO v_reservadas FROM ventas_ordline_detail 
+			WHERE m_attributesetinstance_id=:NEW.m_attributesetinstance_id
+			--AND m_product_id=NEW.m_product_id
+			;
+
+			SELECT SUM (qty) INTO v_enviadas FROM VENTAS_HISTORIAL_DESGLOCE
+				WHERE VENTAS_ORDLINE_DETAIL_ID IN 
+					(SELECT VENTAS_ORDLINE_DETAIL_ID 
+					FROM VENTAS_ORDLINE_DETAIL WHERE 
+					M_ATTRIBUTESETINSTANCE_ID = :NEW.m_attributesetinstance_id)
+				AND M_INOUTLINE_ID IS NOT NULL;
+
+			v_reservadas = v_reservadas - v_enviadas;
+
+			DBMS_OUTPUT.PUT_LINE( 'RESERVADAS: -- ' || v_reservadas);
+
+
+			SELECT sum(qtyonhand) INTO v_qtysd FROM m_storage_detail 
+			WHERE m_attributesetinstance_id=:NEW.m_attributesetinstance_id
+			--AND m_product_id=NEW.m_product_id 
+			AND m_locator_id=:NEW.m_locator_id
+			;
+			DBMS_OUTPUT.PUT_LINE( 'NEW.M_LOCATOR_ID' || :NEW.M_LOCATOR_ID);
+	DBMS_OUTPUT.PUT_LINE( 'NEW.m_attributesetinstance_id' || :NEW.m_attributesetinstance_id);
+	DBMS_OUTPUT.PUT_LINE(:NEW.movementqty||' ---- '||v_qtysd || ' ---- ' || v_reservadas||' ---- '||:NEW.movementType);
+			IF :NEW.movementqty>v_qtysd-v_reservadas THEN 
+
+
+				SELECT o.documentno,ol.c_orderline_id  INTO v_documentno, v_orderline_id
+				FROM ventas_ordline_detail oldd
+				INNER JOIN c_orderline ol ON oldd.c_orderline_id=ol.c_orderline_id
+				INNER JOIN c_order o ON ol.c_order_id=o.c_order_id
+				WHERE oldd.m_attributesetinstance_id=:NEW.m_attributesetinstance_id
+				--AND oldd.m_product_id=NEW.m_product_id
+				;
+
+				IF :NEW.movementType='C-' THEN
+					SELECT count(*) INTO v_ligada FROM m_inoutline WHERE c_orderline_id=v_orderline_id;
+					IF v_ligada=0 THEN
+						RAISE_APPLICATION_ERROR(-20000, '0No cuenta con suficiente material disponible ('|| round(v_qtysd-v_reservadas,4) ||') en el huacal.' || '// Producto: ' || COALESCE(v_prodName,'NULO') || '// Atributo: ' || COALESCE(v_asiName,'NULO'));
+					END IF;
+				ELSE
+					IF :NEW.movementType IN ('I+', 'M+') AND  :NEW.movementqty>0 THEN
+					ELSE
+						RAISE_APPLICATION_ERROR(-20000, :NEW.movementqty||' No cuenta con suficiente material disponible ('|| round(v_qtysd-v_reservadas,4) ||') en el huacal.' || '// Producto: ' || COALESCE(v_prodName,'NULO') || '// Atributo: ' || COALESCE(v_asiName,'NULO'));
+					END IF;
+				END IF;
+			
+			END IF;
+		END IF;
+	END IF;
+	--END IF;--BORRAR
+	--END AGREGADO MALCOLM
+
+		IF (UPPER(v_tileoslab) = 'TILE') THEN
+			IF (:NEW.MOVEMENTTYPE IN ('C+', 'C-', 'V+', 'V-', 'M+', 'M-')) THEN
+				SELECT ALMAC_VALIDA_CANTIDAD (:NEW.M_PRODUCT_ID, :NEW.MOVEMENTQTY, :NEW.M_ATTRIBUTESETINSTANCE_ID, :NEW.M_LOCATOR_ID, :NEW.C_UOM_ID) INTO v_mensaje;
+				IF (v_mensaje <> 'OK') THEN
+					RAISE_APPLICATION_ERROR(-20000, v_mensaje);
+					RETURN OLD;
+				END IF;
+			END IF;
+		END IF;
+
+		IF (UPPER(v_tileoslab) = 'SLAB') THEN
+			IF (:NEW.MOVEMENTTYPE IN ('C-', 'V-', 'M-') AND :NEW.MOVEMENTQTY < 0) THEN
+				SELECT ALMAC_VALIDA_CANTIDAD (:NEW.M_PRODUCT_ID, :NEW.MOVEMENTQTY, :NEW.M_ATTRIBUTESETINSTANCE_ID, :NEW.M_LOCATOR_ID, :NEW.C_UOM_ID) INTO v_mensaje;
+				IF (v_mensaje <> 'OK') THEN
+					RAISE_APPLICATION_ERROR(-20000, v_mensaje);
+					RETURN OLD;
+				END IF;
+			END IF;
+		END IF;
+END IF;	
+END ALMAC_TRANSACTION_TRG
+]]></body>
+    </trigger>
+  </database>

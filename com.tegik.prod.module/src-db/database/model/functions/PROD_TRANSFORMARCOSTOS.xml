@@ -1,0 +1,134 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION PROD_TRANSFORMARCOSTOS">
+    <function name="PROD_TRANSFORMARCOSTOS" type="NULL">
+      <parameter name="p_production_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_productionplan_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_message" type="VARCHAR" mode="out">
+        <default/>
+      </parameter>
+      <body><![CDATA[-- Logistice
+  v_ResultStr VARCHAR2(2000):='';
+  v_Message VARCHAR2(2000):='';
+  v_Record_ID VARCHAR2(32);
+  -- Parameter
+  TYPE RECORD IS REF CURSOR;
+    Cur_Parameter RECORD;
+    Cur_production RECORD;
+    Cur_cost RECORD;
+    -- Parameter Variables
+    FINISH_PROCESS BOOLEAN:=false;
+    v_cuenta NUMBER;
+    v_productionplan_id VARCHAR(32);
+  BEGIN
+  BEGIN 
+    v_ResultStr:='Reading Record';
+    SELECT * INTO Cur_production FROM m_production WHERE m_production_id=p_production_id;
+
+    SELECT m_productionplan_id INTO v_productionplan_id FROM m_productionplan 
+	WHERE m_productionplan_id=p_productionplan_id;
+	
+IF  Cur_production.em_prod_issubcontract='Y' THEN
+	INSERT INTO ma_pl_invoiceline(
+            ma_pl_invoiceline_id, ad_client_id, ad_org_id, isactive, created, 
+            createdby, updated, updatedby, m_productionplan_id, c_invoiceline_id, 
+            "cost")
+    VALUES (GET_UUID(),--ma_pl_invoiceline_id, 
+		Cur_production.ad_client_id, 
+		Cur_production.ad_org_id, 
+		Cur_production.isactive, 
+		now(),--created, 
+		Cur_production.createdby, 
+		now(),--updated, 
+		Cur_production.updatedby, 
+		m_production_id,--m_productionplan_id, 
+		NULL,--c_invoiceline_id, 
+		em_prod_costoutsource--"cost"
+            );
+
+ELSE  
+ 
+ FOR Cur_cost IN
+      (SELECT prod_production_costs_id, created, createdby, updated, updatedby, 
+       ad_client_id, ad_org_id, isactive, c_salary_category_id, ma_indirect_cost_id, 
+       ma_machine_id, quantity, cost_type, m_production_id
+      FROM prod_production_costs 
+      WHERE m_production_id=Cur_production.m_production_id
+      )
+    LOOP 
+      IF Cur_cost.cost_type = 'E' THEN
+	INSERT INTO ma_pl_employee(
+            ma_pl_employee_id, created, createdby, updated, updatedby, ad_client_id, 
+            ad_org_id, m_productionplan_id, c_salary_category_id, quantity, 
+            isactive, calccost)
+	VALUES ( GET_UUID(),--ma_pl_employee_id, 
+		now(),--created, 
+		Cur_cost.createdby, 
+		now(),--updated, 
+		Cur_cost.updatedby, 
+		Cur_cost.ad_client_id, 
+		Cur_cost.ad_org_id, 
+		v_productionplan_id,--m_productionplan_id, 
+		Cur_cost.c_salary_category_id, 
+		Cur_cost.quantity, 
+		Cur_cost.isactive, 
+		NULL--calccost
+		);
+
+      END IF;
+      IF Cur_cost.cost_type = 'M' THEN
+	INSERT INTO ma_pl_machine(
+            ma_pl_machine_id, created, createdby, updated, updatedby, ad_client_id, 
+            ad_org_id, m_productionplan_id, ma_machine_id, use, isactive, 
+            calccost)
+	VALUES (GET_UUID(),--ma_pl_machine_id, 
+		now(),--created, 
+		Cur_cost.createdby, 
+		now(),--updated, 
+		Cur_cost.updatedby, 
+		Cur_cost.ad_client_id, 
+		Cur_cost.ad_org_id, 
+		v_productionplan_id,--m_productionplan_id, 
+		Cur_cost.ma_machine_id, 
+		Cur_cost.quantity,--use, 
+		Cur_cost.isactive, 
+		NULL--calccost
+            );
+      END IF;
+      IF Cur_cost.cost_type = 'I' THEN
+	INSERT INTO ma_pl_ic(
+            ma_pl_ic_id, created, createdby, updated, updatedby, ad_client_id, 
+            ad_org_id, m_productionplan_id, ma_indirect_cost_id, isactive, 
+            calccost)
+	VALUES (GET_UUID(),--ma_pl_ic_id, 
+		now(),--created, 
+		Cur_cost.createdby, 
+		now(),--updated, 
+		Cur_cost.updatedby, 
+		Cur_cost.ad_client_id, 
+		Cur_cost.ad_org_id, 
+		v_productionplan_id,--m_productionplan_id, 
+		Cur_cost.ma_indirect_cost_id,  
+		Cur_cost.isactive, 
+		NULL--calccost
+		);
+      END IF;
+    END LOOP;  
+END IF;--em_prod_issubcontract  
+
+    RETURN;
+  END; --BODY
+  
+EXCEPTION
+WHEN OTHERS THEN
+  v_ResultStr:= '' || SQLERRM;
+  DBMS_OUTPUT.PUT_LINE(v_ResultStr) ;
+  p_message:=v_ResultStr;
+  RETURN;
+END PROD_TRANSFORMARCOSTOS
+]]></body>
+    </function>
+  </database>

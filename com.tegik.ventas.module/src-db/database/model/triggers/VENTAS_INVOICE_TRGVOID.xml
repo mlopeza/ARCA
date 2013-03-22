@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER VENTAS_INVOICE_TRGVOID">
+    <trigger name="VENTAS_INVOICE_TRGVOID" table="C_INVOICE" fires="before" insert="true" update="true" delete="false" foreach="row">
+      <body><![CDATA[ v_cuenta NUMBER;
+ v_doc VARCHAR(32);
+BEGIN
+  IF AD_isTriggerEnabled()='N' THEN RETURN;
+  END IF;
+
+  SELECT COUNT(*) INTO v_cuenta FROM M_INOUT WHERE C_INVOICE_ID = :NEW.C_INVOICE_ID AND DOCSTATUS IN ('DR', 'CO');
+
+  SELECT DOCUMENTNO INTO v_doc FROM M_INOUT WHERE C_INVOICE_ID = :NEW.C_INVOICE_ID AND DOCSTATUS IN ('DR', 'CO') LIMIT 1;
+
+  IF (COALESCE(v_cuenta, 0) > 0 AND :NEW.DOCSTATUS IN ('VO','DR')) THEN
+	RAISE_APPLICATION_ERROR(-20000, 'La factura tiene entradas/salidas de mercancía asociadas, para cancelar la factura, cancele los documentos: ' || v_doc) ;
+  END IF;
+  
+END VENTAS_INVOICE_TRGVOID
+]]></body>
+    </trigger>
+  </database>
