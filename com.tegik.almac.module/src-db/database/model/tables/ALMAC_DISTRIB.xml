@@ -77,6 +77,13 @@
         <default/>
         <onCreateDefault/>
       </column>
+      <column name="ALMAC_ATADO_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <foreign-key foreignTable="ALMAC_ATADO" name="ALMAC_ALMAC_DISTRIB_ATADO">
+        <reference local="ALMAC_ATADO_ID" foreign="ALMAC_ATADO_ID"/>
+      </foreign-key>
       <foreign-key foreignTable="M_LOCATOR" name="ALMAC_DIS_L_FK">
         <reference local="M_LOCATOR_ID" foreign="M_LOCATOR_ID"/>
       </foreign-key>

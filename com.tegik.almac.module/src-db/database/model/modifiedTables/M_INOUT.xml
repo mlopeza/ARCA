@@ -33,8 +33,27 @@
         <default/>
         <onCreateDefault/>
       </column>
+      <column name="EM_ALMAC_VENTAS_PICK_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_MATRICULA" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_NUM_ENTREGA" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_NOMB_CHOFER" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
       <foreign-key foreignTable="M_FREIGHT" name="EM_ALMAC_FREIGHT_FK">
         <reference local="EM_ALMAC_M_FREIGHT_ID" foreign="M_FREIGHT_ID"/>
+      </foreign-key>
+      <foreign-key foreignTable="VENTAS_PICKEXECUTE" name="EM_ALMAC_M_INOUT_PICK" onDelete="cascade">
+        <reference local="EM_ALMAC_VENTAS_PICK_ID" foreign="VENTAS_PICKEXECUTE_ID"/>
       </foreign-key>
       <foreign-key foreignTable="M_SHIPPER" name="EM_ALMAC_SHIPPER_FK">
         <reference local="EM_ALMAC_M_SHIPPER_ID" foreign="M_SHIPPER_ID"/>

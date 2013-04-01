@@ -50,7 +50,8 @@ BEGIN
 	
 	UPDATE m_attributesetinstance 
 	SET em_almac_alto = :NEW.ALTO,
-	em_almac_ancho = :NEW.ANCHO
+	em_almac_ancho = :NEW.ANCHO,
+	em_almac_atado_id = :NEW.em_almac_atado_id
 	WHERE M_ATTRIBUTESETINSTANCE_ID = v_respuesta;
 
 	END COMPRA_PACKINGLIST_TRG

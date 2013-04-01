@@ -164,7 +164,8 @@
 				alto,
 				compra_contenedor_id,
 				generarconsecutivo,
-				costo_pieza
+				costo_pieza,
+				almac_atado_id
 				)
 				VALUES (
 				get_uuid(),--compra_packinglist_id,
@@ -185,7 +186,8 @@
 				cur_Linea.alto,--alto
 				cur_InOut.EM_Compra_Contenedordf_ID,
 				'N',
-				cur_Linea.costo_pieza
+				cur_Linea.costo_pieza,
+				cur_Linea.em_almac_atado_id
 				);
 			
 			END LOOP;

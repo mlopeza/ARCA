@@ -41,22 +41,24 @@
   v_final NUMBER;
   v_numero NUMBER;
   v_cantidad NUMBER;
-  v_prefijo VARCHAR(10);
-  v_atributo VARCHAR(255);
+  v_prefijo VARCHAR(10);--OBTG:VARCHAR2--
+  v_atributo VARCHAR(255);--OBTG:VARCHAR2--
   cur_contenedor  RECORD;
-  v_mensaje VARCHAR(50000):='';
+  v_mensaje VARCHAR(50000):='';--OBTG:VARCHAR2--
   array_len NUMBER;
-  v_lista VARCHAR(50000);
+  v_lista VARCHAR(50000);--OBTG:VARCHAR2--
   lista_valores VARCHAR(255)[];
-  v_tileoslab VARCHAR(10);
+  v_tileoslab VARCHAR(10);--OBTG:VARCHAR2--
   v_alto NUMBER;
   v_ancho NUMBER;
   v_m2 NUMBER;
   v_costo NUMBER;
   v_variable NUMBER;
-  v_user VARCHAR(32);
-  v_producto VARCHAR(32);
-  v_uuid VARCHAR(32);
+  v_user VARCHAR(32);--OBTG:VARCHAR2--
+  v_producto VARCHAR(32);--OBTG:VARCHAR2--
+  v_uuid VARCHAR(32);--OBTG:VARCHAR2--
+  v_atado VARCHAR(60);--OBTG:VARCHAR2--
+  v_atado_id VARCHAR(32);--OBTG:VARCHAR2-
   BEGIN
 
     --  Update AD_PInstance
@@ -102,16 +104,36 @@
       IF (Cur_Parameter.parametername LIKE 'costo') THEN
 		v_costo := Cur_Parameter.p_number;
       END IF;
+      IF (Cur_Parameter.parametername LIKE 'atado') THEN
+		v_atado := Cur_Parameter.P_String;
+      END IF;
     END LOOP; -- Get Parameter
     -- Read Information from Record
 
-			--RAISE_APPLICATION_ERROR(-20000, v_producto);
+			
 
 
 	SELECT EM_DMPROD_TILEOSLAB INTO v_tileoslab FROM M_PRODUCT WHERE M_PRODUCT_ID  = v_producto;
 
 	SELECT * INTO cur_contenedor FROM compra_contenedor WHERE compra_contenedor_id = v_Record_ID;
-	
+	IF (UPPER(v_tileoslab) = 'TILE' and V_ATADO IS NOT NULL) THEN
+		RAISE_APPLICATION_ERROR(-20000, 'Los Tiles no pueden pertenecer a un atado.');
+	ELSIF(UPPER(v_tileoslab) = 'SLAB') THEN
+
+	SELECT almac_atado_id INTO v_atado_id FROM almac_atado WHERE documentno = TRIM(v_atado);
+	--Crea el Nuevo atado Si no existe
+		IF v_atado_id is null THEN
+			SELECT GET_UUID() INTO v_atado_id FROM DUAL;
+			INSERT INTO almac_atado(almac_atado_id,ad_client_id,ad_org_id,createdby,updatedby,documentno,description)
+				VALUES(v_atado_id,'0BD13E24E0F94596B61414BD72225EB8','0','100','100',TRIM(v_atado),'Creción de Atado por Contenedor.');
+				
+
+	ELSE 
+		RAISE_APPLICATION_ERROR(-20000, 'El tipo de producto no es Tile o Slab.');
+	END IF;
+
+
+	END IF;
         v_variable = 1;
 	WHILE v_variable <= v_cantidad LOOP
 		IF (v_tileoslab = 'Tile') THEN
@@ -167,7 +189,7 @@
 			v_m2 := v_ancho * v_alto;
 
 			SELECT get_uuid() INTO v_uuid FROM DUAL;
-
+			
 			INSERT INTO compra_packinglist(
 			compra_packinglist_id,
 			ad_client_id,
@@ -182,7 +204,7 @@
 			m_attributesetinstance_id,
 			quantity,
 			alto,
-			ancho,costo_pieza)
+			ancho,costo_pieza,em_almac_atado_id)
 			VALUES (
 			v_uuid,--compra_packinglist_id,
 			cur_contenedor.ad_client_id,--ad_client_id,
@@ -198,11 +220,12 @@
 			v_m2,--quantity,
 			v_alto,--alto,
 			v_ancho,--ancho
-			v_costo);
+			v_costo,v_atado_id);
 		END IF;
 
 		
 		v_variable = v_variable + 1;
+		DBMS_OUTPUT.PUT_LINE( v_atado_id);
 	END LOOP;
    
      --FINISH_PROCESS
