@@ -7,7 +7,7 @@ BEGIN
   IF AD_isTriggerEnabled()='N' THEN RETURN;
   END IF;
 
-  IF (:NEW.issotrx = 'Y' AND :NEW.docstatus='CO') THEN
+  IF (:NEW.issotrx = 'Y' AND :NEW.docstatus='CO' AND :NEW.c_order_id IS NULL) THEN
 	--Verifica que tenga un pedido
 	IF :NEW.em_almac_ventas_pick_id IS NULL THEN
 		RAISE_APPLICATION_ERROR(-20000, 'No se puede completar la salida si no existe un número de pedido.') ;

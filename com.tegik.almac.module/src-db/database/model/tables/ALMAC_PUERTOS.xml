@@ -53,6 +53,9 @@
       <foreign-key foreignTable="C_COUNTRY" name="ALMAC_PUERTOS_C_COUNTRY" onDelete="cascade">
         <reference local="C_COUNTRY_ID" foreign="C_COUNTRY_ID"/>
       </foreign-key>
+      <foreign-key foreignTable="AD_ORG" name="ALMAC_PUERTOS_ORG">
+        <reference local="AD_ORG_ID" foreign="AD_ORG_ID"/>
+      </foreign-key>
       <index name="ALMAC_PUERTOS_INDEX" unique="false">
         <index-column name="ALMAC_PUERTOS_ID"/>
       </index>

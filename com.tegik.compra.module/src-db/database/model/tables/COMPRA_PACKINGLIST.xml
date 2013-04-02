@@ -70,6 +70,9 @@
       <foreign-key foreignTable="COMPRA_CONTENEDOR" name="COMPRA_CONTENEDOR_KEY">
         <reference local="COMPRA_CONTENEDOR_ID" foreign="COMPRA_CONTENEDOR_ID"/>
       </foreign-key>
+      <foreign-key foreignTable="AD_ORG" name="COMPRA_PACKINGLIST_ORG">
+        <reference local="AD_ORG_ID" foreign="AD_ORG_ID"/>
+      </foreign-key>
       <foreign-key foreignTable="M_PRODUCT" name="COMPRA_PRODUCT_KEY">
         <reference local="M_PRODUCT_ID" foreign="M_PRODUCT_ID"/>
       </foreign-key>

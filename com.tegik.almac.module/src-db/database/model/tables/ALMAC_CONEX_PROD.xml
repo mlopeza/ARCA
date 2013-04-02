@@ -61,6 +61,9 @@
       <foreign-key foreignTable="ALMAC_PUERTOS_CONEXION" name="ALMAC_CONEX_PROD_CONEX" onDelete="cascade">
         <reference local="ALMAC_PUERTOS_CONEXION_ID" foreign="ALMAC_PUERTOS_CONEXION_ID"/>
       </foreign-key>
+      <foreign-key foreignTable="AD_ORG" name="ALMAC_CONEX_PROD_ORG">
+        <reference local="AD_ORG_ID" foreign="AD_ORG_ID"/>
+      </foreign-key>
       <foreign-key foreignTable="M_PRODUCT" name="ALMAC_CONEX_PROD_PRODUCT" onDelete="cascade">
         <reference local="M_PRODUCT_ID" foreign="M_PRODUCT_ID"/>
       </foreign-key>

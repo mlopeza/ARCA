@@ -50,6 +50,9 @@
       <foreign-key foreignTable="AD_USER" name="ALMAC_AREA_AD_USER2" onDelete="cascade">
         <reference local="UPDATEDBY" foreign="AD_USER_ID"/>
       </foreign-key>
+      <foreign-key foreignTable="AD_ORG" name="ALMAC_AREA_ORG">
+        <reference local="AD_ORG_ID" foreign="AD_ORG_ID"/>
+      </foreign-key>
       <check name="ALMAC_AREA_IA_CHECK"><![CDATA[ISACTIVE IN ('Y', 'N')]]></check>
     </table>
   </database>

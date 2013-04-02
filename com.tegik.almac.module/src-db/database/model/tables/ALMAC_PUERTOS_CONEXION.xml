@@ -99,6 +99,9 @@
       <foreign-key foreignTable="ALMAC_PUERTOS" name="ALMAC_PUERTOS_CON_DESDE" onDelete="cascade">
         <reference local="DESDE_PUERTO" foreign="ALMAC_PUERTOS_ID"/>
       </foreign-key>
+      <foreign-key foreignTable="AD_ORG" name="ALMAC_PUERTOS_CONEXION_ORG">
+        <reference local="AD_ORG_ID" foreign="AD_ORG_ID"/>
+      </foreign-key>
       <index name="ALMAC_PUERTOS_CONEX_INDEX" unique="false">
         <index-column name="ALMAC_PUERTOS_CONEXION_ID"/>
       </index>
