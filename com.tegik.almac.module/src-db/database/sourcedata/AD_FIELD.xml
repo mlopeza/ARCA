@@ -3404,7 +3404,7 @@ New: The alert has been created and has not been reviewed yet.
 Read: The alert has been reviewed and user is waiting to be solved.
 Solved: The alert has been solved and is not an issue any more.
 Exception: The alert has been acknowledged but not action is going to be made to solve it.]]></HELP>
-<!--4BA0046AE57849E6919F988582CC4035-->  <ISCENTRALLYMAINTAINED><![CDATA[Y]]></ISCENTRALLYMAINTAINED>
+<!--4BA0046AE57849E6919F988582CC4035-->  <ISCENTRALLYMAINTAINED><![CDATA[N]]></ISCENTRALLYMAINTAINED>
 <!--4BA0046AE57849E6919F988582CC4035-->  <AD_TAB_ID><![CDATA[9F937369782347048F27D8CBE4D7D76E]]></AD_TAB_ID>
 <!--4BA0046AE57849E6919F988582CC4035-->  <AD_COLUMN_ID><![CDATA[2B648C89922E4093AF77F12BF7A80A6B]]></AD_COLUMN_ID>
 <!--4BA0046AE57849E6919F988582CC4035-->  <IGNOREINWAD><![CDATA[N]]></IGNOREINWAD>
