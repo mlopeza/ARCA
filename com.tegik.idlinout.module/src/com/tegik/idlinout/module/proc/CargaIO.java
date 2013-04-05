@@ -193,8 +193,7 @@ public class CargaIO extends IdlService {
                         pHash.clear();
                         containerHash.clear();
                         linesHash.clear();
-			if(!error)
-				completaCabeceras();
+			completaCabeceras();
 			headerHash.clear();
 			return true;
 		}
@@ -333,14 +332,20 @@ public class CargaIO extends IdlService {
 			//Decide si es tile o slab
 			AttributeSet ts = null;
 			String res = (((String)values[14]).trim().toUpperCase());
+			Product p = null;
 			if(res.equals("SLAB")){
 				ts = slab;
 			}else if(res.equals("TILE")){
 				ts = tile;
 			}else{
-				throw new OBException(Utility.messageBD(conn, "Error de Formato, no es TILE ni SLAB linea: <"+(getRecordsProcessed()+2)+">" , vars.getLanguage()));
+			        p = findProduct(ts,values);
+			        if(p == null)
+			          throw new OBException(Utility.messageBD(conn, "Error de Formato, no es TILE ni SLAB linea: <"+(getRecordsProcessed()+2)+">" , vars.getLanguage()));
 			}
-
+			
+			if(p==null)
+			  p = findProduct(ts,values);
+			
 			BigDecimal arancel,espesor,costoFOB,largo,ancho;
 			largo = (values[19]==null || (((String)values[19]).replaceAll("[^\\d|^\\.]","").trim()).equals("") )? null : new BigDecimal((String)values[19]);
 			ancho = (values[20]==null ||(((String)values[20]).replaceAll("[^\\d|^\\.]","").trim()).equals(""))? null : new BigDecimal((String)values[20]);
@@ -364,12 +369,12 @@ public class CargaIO extends IdlService {
 				}
 			}
 			
-			Product p = findProduct(ts,values);
+			
 			//Crea una instancia que describe al producto
 			AttributeSetInstance asiTemp =  createASI(
 					(String)values[9],
 					InOut.getOrganization(),
-					ts,
+					p.getAttributeSet(),
 					//alto,ancho,espesor(por si se necesita despues),(se removio fecha de entrada)
 					largo,
 					ancho,
@@ -476,8 +481,10 @@ public class CargaIO extends IdlService {
 	        BigDecimal costoReal = BigDecimal.ZERO;
 	        if(costo == null || costo.trim().equals("")){
 	            costoReal = p.getAlmacFobUsd();
+	            log.info("Costo del Producto="+costoReal);
 	        }else{
-	          costoReal = new BigDecimal(costo);
+	            log.info("Costo del Archivo = "+costo);
+	            costoReal = new BigDecimal(costo);
 	        }
 	        
 	        //Verificas que exist ael atributo en la base de datos
@@ -566,6 +573,10 @@ public class CargaIO extends IdlService {
 			//log.info("Query producto:"+pQ);
 			//Si no crea un producto completamente nuevo
 			if(pList.isEmpty()){
+			        log.info("Creando Producto:  "+value);
+			        if(ts == null){
+			           throw new OBException(Utility.messageBD(conn, "Error de Formato, no es TILE ni SLAB linea: <"+(getRecordsProcessed()+2)+">" , vars.getLanguage()));
+			        }
 				p = OBProvider.getInstance().get(Product.class);
 				p.setClient(OBContext.getOBContext().getCurrentClient());
 				p.setOrganization(org);
@@ -939,6 +950,7 @@ public class CargaIO extends IdlService {
 			pInstance.setProcess(process);
 			//Debe ponerse como activo
 			pInstance.setActive(true);
+			log.info(header.getDocumentNo());
 			pInstance.setRecordID(header.getId());
 			//Obtiene el usuario del contexto
 			pInstance.setUserContact(OBContext.getOBContext().getUser());
@@ -969,7 +981,7 @@ public class CargaIO extends IdlService {
 			//log.info(header.getDocumentNo());
 			//log.info(pInstance.getResult());
 			if(!((pInstance.getResult()).equals(new Long(1)))){
-
+			        
 				log.info(pInstance.getErrorMsg());
 				error = true;
 				OBDal.getInstance().rollbackAndClose();

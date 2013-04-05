@@ -26,6 +26,7 @@
       <check name="MA_WRPHASEPRODUCT_PRODUCTI_CHK"><![CDATA[PRODUCTIONTYPE IN ('+', '-')]]></check>
     </removeCheckChange>
     <columnSizeChange tablename="M_PRODUCT" columnname="VALUE" newSize="60" oldSize="40"/>
+    <columnSizeChange tablename="M_PRODUCT" columnname="SKU" newSize="60" oldSize="30"/>
     <removeCheckChange tableName="S_TIMEEXPENSE" checkName="S_TIMEEXPENSE_PROCESSED_CHK">
       <check name="S_TIMEEXPENSE_PROCESSED_CHK"><![CDATA[PROCESSED IN ('Y', 'N')]]></check>
     </removeCheckChange>
@@ -64,6 +65,10 @@
     <columnDataChange tablename="AD_COLUMN" columnname="AD_REFERENCE_ID" pkRow="2227">
       <oldValue><![CDATA[29]]></oldValue>
       <newValue><![CDATA[800019]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_COLUMN" columnname="FIELDLENGTH" pkRow="2305">
+      <oldValue><![CDATA[30]]></oldValue>
+      <newValue><![CDATA[60]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="AD_COLUMN" columnname="AD_REFERENCE_ID" pkRow="3540">
       <oldValue><![CDATA[29]]></oldValue>

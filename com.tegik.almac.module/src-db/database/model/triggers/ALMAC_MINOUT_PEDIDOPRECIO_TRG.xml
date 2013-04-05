@@ -14,7 +14,7 @@ BEGIN
 		RETURN OLD;
 	END IF;
 	--Cuenta los que no tienen precio
-	SELECT COUNT(*) INTO v_cuenta FROM (select m_inoutline_id, em_almac_preciom2 FROM M_INOUTLINE WHERE M_INOUT_ID = :NEW.M_INOUT_ID) iol
+	SELECT COUNT(*) INTO v_cuenta FROM (select m_inoutline_id, em_almac_preciom2 FROM M_INOUTLINE WHERE M_INOUT_ID = :NEW.M_INOUT_ID AND em_almac_preciom2 IS NULL) iol
 			LEFT JOIN almac_distrib ad ON ad.m_inoutline_id = iol.m_inoutline_id AND (ad.costo_pieza is null OR iol.em_almac_preciom2 is null);
 	IF (v_cuenta > 0 ) THEN
 		RAISE_APPLICATION_ERROR(-20000, 'No se puede completar la salida si alguna pieza no tiene precio.') ;

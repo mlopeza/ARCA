@@ -276,7 +276,7 @@ public class CargaProductos extends IdlService {
 			//Verifica si el producto es del tipo Tile o Slab
 			AttributeSet ts = null;
 			String res = (((String)values[8]).trim().toUpperCase());
-
+			
 			if(res.equals("SLAB")){
 				ts = slab;
 			}else if(res.equals("TILE")){
@@ -326,7 +326,10 @@ public class CargaProductos extends IdlService {
 			if(!(((String)v[19]).trim().toUpperCase()).equals("NACIONAL"))
 				embarque = (((String)v[21]).split("-")[1]).trim();
 		}catch(Exception e){
-			throw new OBException(Utility.messageBD(conn, "El puerto de embarque no se encuentra en el formato Pais - puerto <"+((String)v[21])+"> linea: <"+(getRecordsProcessed()+2)+">" , vars.getLanguage()));
+		        if(v[19]==null || v[21]==null)
+		          throw new OBException(Utility.messageBD(conn, "El puerto de embarque no se encuentra en el formato Pais - puerto <"+((String)v[21])+"> linea: <"+(getRecordsProcessed()+2)+">" , vars.getLanguage()));
+		        else
+		          embarque = ((String)v[21]).trim();
 		}
 
 		//En caso de que no lo encuentre lo busca en la base de datos
