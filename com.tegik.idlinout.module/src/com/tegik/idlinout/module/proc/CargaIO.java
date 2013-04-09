@@ -193,7 +193,7 @@ public class CargaIO extends IdlService {
                         pHash.clear();
                         containerHash.clear();
                         linesHash.clear();
-			completaCabeceras();
+			//completaCabeceras();
 			headerHash.clear();
 			return true;
 		}
@@ -457,6 +457,7 @@ public class CargaIO extends IdlService {
 		ad.setCreatedBy(OBContext.getOBContext().getUser());
 		ad.setUpdated(dTemp);
 		ad.setUpdatedBy(OBContext.getOBContext().getUser());
+		log.info("Cantidad  "+cantidad);
 		ad.setMovementQuantity(cantidad);
 		ad.setAttributeSetValue(ASID);
 		ad.setGoodsShipmentLine(linea);

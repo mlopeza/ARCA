@@ -8,6 +8,7 @@ v_issotrx    VARCHAR(1);
 v_name VARCHAR(32);
 v_asi VARCHAR(32);
 v_inventario NUMBER;
+v_record RECORD; 
         
 BEGIN
     
@@ -72,6 +73,15 @@ BEGIN
 
 		END IF;
 
+	END IF;
+	IF :NEW.almac_atado_id IS NOT NULL AND :NEW.m_attributesetinstance_id IS NOT NULL AND UPPER(TRIM((select em_dmprod_tileoslab from m_product where m_product_id = :NEW.m_product_id))) = 'SLAB' THEN
+		update m_attributesetinstance set em_almac_atado_id = :NEW.almac_atado_id where m_attributesetinstance_id = :NEW.m_attributesetinstance_id;
+	END IF;
+	
+	IF :NEW.m_attributesetinstance_id IS NOT NULL THEN 
+		--RAISE (SELECT documentno from almac_atado where almac_atado_id = :NEW.almac_atado_id LIMIT 1);
+		select description into v_record from m_attributesetinstance where m_attributesetinstance_id = :NEW.m_attributesetinstance_id;
+		:NEW.DESCRIPCION_ATRIBUTO = v_record.description;
 	END IF;
 	
 	END ALMAC_DISTRIB_ASI_TRG

@@ -81,6 +81,10 @@
         <default/>
         <onCreateDefault/>
       </column>
+      <column name="DESCRIPCION_ATRIBUTO" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
       <foreign-key foreignTable="ALMAC_ATADO" name="ALMAC_ALMAC_DISTRIB_ATADO">
         <reference local="ALMAC_ATADO_ID" foreign="ALMAC_ATADO_ID"/>
       </foreign-key>
@@ -102,6 +106,13 @@
       <foreign-key foreignTable="AD_ORG" name="ALMAC_DISTRIBORG">
         <reference local="AD_ORG_ID" foreign="AD_ORG_ID"/>
       </foreign-key>
+      <index name="ALMAC_DISTRIB_INDEX_KEY" unique="false">
+        <index-column name="ALMAC_DISTRIB_ID"/>
+      </index>
+      <index name="ALMAC_INDEX_PRODUCT_IOL" unique="false">
+        <index-column name="M_PRODUCT_ID"/>
+        <index-column name="M_INOUTLINE_ID"/>
+      </index>
       <check name="ALMAC_DISTRIB_IA_CHECK"><![CDATA[ISACTIVE IN ('Y', 'N')]]></check>
     </table>
   </database>
