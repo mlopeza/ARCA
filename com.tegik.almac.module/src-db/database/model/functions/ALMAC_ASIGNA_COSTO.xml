@@ -56,7 +56,10 @@
 
 	--Actualiza ALMAC_DISTRIB en caso de que este ligado
 	select m_inoutline_id into v_inoutline from m_inoutline where m_product_id = v_producto AND M_INOUT_ID = v_Record_ID;
+	--Actualiza las Lineas
 	UPDATE almac_distrib SET costo_pieza = v_costo where m_product_id = v_producto AND m_inoutline_id = v_inoutline;
+	--Actualiza las Instancias
+        UPDATE m_attributesetinstance set em_almac_costo_realusd = v_costo where m_attributesetinstance_id in (select m_attributesetinstance_id from almac_distrib where m_inoutline_id = v_inoutline);
 	
     --  Update AD_PInstance
     AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'N', 1, 'Se cambiaron los precios correctamente.');

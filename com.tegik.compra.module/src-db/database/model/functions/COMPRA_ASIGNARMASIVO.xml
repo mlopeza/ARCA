@@ -41,19 +41,22 @@
   v_final NUMBER;
   v_numero NUMBER;
   v_cantidad NUMBER;
-  v_prefijo VARCHAR(10);
-  v_atributo VARCHAR(255);
+  v_prefijo VARCHAR(10);--OBTG:VARCHAR2--
+  v_atributo VARCHAR(255);--OBTG:VARCHAR2--
   cur_inoutline  RECORD;
-  v_mensaje VARCHAR(50000):='';
+  v_mensaje VARCHAR(50000):='';--OBTG:VARCHAR2--
   array_len NUMBER;
-  v_lista VARCHAR(50000);
+  v_lista VARCHAR(50000);--OBTG:VARCHAR2--
   lista_valores VARCHAR(255)[];
-  v_tileoslab VARCHAR(10);
+  v_tileoslab VARCHAR(10);--OBTG:VARCHAR2--
   v_alto NUMBER;
   v_ancho NUMBER;
   v_m2 NUMBER;
+  v_costo NUMBER;
   v_variable NUMBER;
-  v_user VARCHAR(32);
+  v_user VARCHAR(32);--OBTG:VARCHAR2--
+  v_atado VARCHAR(60);--OBTG:VARCHAR2--
+  v_atado_id VARCHAR(32):=NULL;--OBTG:VARCHAR2--
   BEGIN
 
     --  Update AD_PInstance
@@ -92,12 +95,35 @@
       IF (Cur_Parameter.parametername LIKE 'm2') THEN
 		v_m2 := Cur_Parameter.p_number;
       END IF;
+      IF (Cur_Parameter.parametername LIKE 'atado') THEN
+		v_atado := Cur_Parameter.p_string;
+      END IF;
+      IF (Cur_Parameter.parametername LIKE 'costo') THEN
+		v_costo := Cur_Parameter.p_number;
+      END IF;
     END LOOP; -- Get Parameter
     -- Read Information from Record
 
 	SELECT EM_DMPROD_TILEOSLAB INTO v_tileoslab FROM M_PRODUCT WHERE M_PRODUCT_ID IN (SELECT M_PRODUCT_ID FROM M_INOUTLINE WHERE M_INOUTLINE_ID = v_Record_ID);
 
 	SELECT * INTO cur_inoutline FROM M_INOUTLINE WHERE M_INOUTLINE_ID = v_Record_ID;
+
+	--Creacion del atado
+	IF (UPPER(v_tileoslab)='TILE' AND v_atado IS NOT NULL) THEN
+			RAISE_APPLICATION_ERROR(-20000, 'Los Tiles no pueden pertenecer a un atado.');
+	ELSIF(UPPER(v_tileoslab)='SLAB' AND v_atado IS NOT NULL) THEN
+		SELECT almac_atado_id INTO v_atado_id FROM almac_atado WHERE documentno = TRIM(v_atado);
+		--Crea el Nuevo atado Si no existe
+		IF v_atado_id is null THEN
+			SELECT GET_UUID() INTO v_atado_id FROM DUAL;
+			INSERT INTO almac_atado(almac_atado_id,ad_client_id,ad_org_id,createdby,updatedby,documentno,description)
+			VALUES(v_atado_id,'0BD13E24E0F94596B61414BD72225EB8','0','100','100',TRIM(v_atado),'Creción de Atado por Contenedor.');			
+		END IF;	
+	ELSIF(UPPER(v_tileoslab) <> 'SLAB' AND UPPER(v_tileoslab) <> 'TILE') THEN
+		RAISE_APPLICATION_ERROR(-20000, 'El tipo de producto no es Tile o Slab. >' ||v_tileoslab||'<') ;
+	END IF;
+	--Fin de Creacion del Atado
+
 	
         v_variable = 1;
         
@@ -113,11 +139,11 @@
 				almac_distrib_id, ad_client_id, ad_org_id, isactive, created, 
 				createdby, updated, updatedby, movementqty, m_attributesetinstance_id, 
 				m_inoutline_id, "name", m_product_id, m_locator_id, ancho,
-				alto)
+				alto,costo_pieza)
 			VALUES (GET_UUID(), cur_inoutline.ad_client_id, cur_inoutline.ad_org_id, cur_inoutline.isactive, now(), 
 				v_user, now(), v_user, v_m2, NULL, 
 				cur_inoutline.m_inoutline_id, NULL, cur_inoutline.m_product_id, cur_inoutline.m_locator_id, 0,
-				0);
+				0,v_costo);
 			
 		END IF;
 
@@ -131,11 +157,11 @@
 				almac_distrib_id, ad_client_id, ad_org_id, isactive, created, 
 				createdby, updated, updatedby, movementqty, m_attributesetinstance_id, 
 				m_inoutline_id, "name", m_product_id, m_locator_id, ancho,
-				alto)
+				alto,almac_atado_id,costo_pieza)
 			VALUES (GET_UUID(), cur_inoutline.ad_client_id, cur_inoutline.ad_org_id, cur_inoutline.isactive, now(), 
 				v_user, now(), v_user, NULL, NULL, 
 				cur_inoutline.m_inoutline_id, NULL, cur_inoutline.m_product_id, cur_inoutline.m_locator_id, v_ancho,
-				v_alto);
+				v_alto,v_atado_id,v_costo);
 		END IF;
 
 		

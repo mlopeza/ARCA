@@ -82,6 +82,9 @@ BEGIN
 		--RAISE (SELECT documentno from almac_atado where almac_atado_id = :NEW.almac_atado_id LIMIT 1);
 		select description into v_record from m_attributesetinstance where m_attributesetinstance_id = :NEW.m_attributesetinstance_id;
 		:NEW.DESCRIPCION_ATRIBUTO = v_record.description;
+		IF :NEW.COSTO_PIEZA IS NOT NULL THEN
+			UPDATE M_ATTRIBUTESETINSTANCE SET EM_ALMAC_COSTO_REALUSD = :NEW.COSTO_PIEZA WHERE M_ATTRIBUTESETINSTANCE_ID = :NEW.M_ATTRIBUTESETINSTANCE_ID;
+		END IF;
 	END IF;
 	
 	END ALMAC_DISTRIB_ASI_TRG
