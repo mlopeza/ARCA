@@ -118,7 +118,6 @@
         <unique-column name="AD_CLIENT_ID"/>
         <unique-column name="DOCUMENTNO"/>
       </unique>
-      <check name="COMPRA_CONTENEDOR_ESTCHECK"><![CDATA[ESTADO IN 'DR', 'CL', 'CO']]></check>
       <check name="COMPRA_CONTENEDOR_IACHECK"><![CDATA[ISACTIVE IN ('Y', 'N')]]></check>
     </table>
   </database>
