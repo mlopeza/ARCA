@@ -25,7 +25,11 @@ BEGIN
       v_temp = v_c1||','||v_reg1||','||v_city1||' - '||v_c2||','||v_reg2||','||v_city2||'   ('||:NEW.freightamt ||')';
 	:NEW.em_almac_description = v_temp;
   END IF;
-IF DELETING THEN RETURN OLD; ELSE RETURN NEW; END IF;
+  IF DELETING 
+	THEN RETURN OLD; 
+  ELSE 
+	RETURN NEW; 
+  END IF;
 END ALMAC_FREIGHT_DESCRIPT_TRG
 ]]></body>
     </trigger>

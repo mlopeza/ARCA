@@ -13,5 +13,10 @@
         <default/>
         <onCreateDefault/>
       </column>
+      <column name="EM_ALMAC_ISSERVICIO" primaryKey="false" required="true" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[N]]></default>
+        <onCreateDefault/>
+      </column>
+      <check name="EM_ALMAC_ISSERVICIO_CHECK"><![CDATA[EM_ALMAC_ISSERVICIO IN ('Y', 'N')]]></check>
     </table>
   </database>

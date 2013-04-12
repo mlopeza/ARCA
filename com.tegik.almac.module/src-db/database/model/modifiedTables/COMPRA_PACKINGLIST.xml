@@ -5,5 +5,8 @@
         <default/>
         <onCreateDefault/>
       </column>
+      <foreign-key foreignTable="ALMAC_ATADO" name="EM_ALMAC_CPACKINGLIST_ATADO">
+        <reference local="EM_ALMAC_ATADO_ID" foreign="ALMAC_ATADO_ID"/>
+      </foreign-key>
     </table>
   </database>

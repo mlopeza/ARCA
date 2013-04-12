@@ -539,7 +539,6 @@
                     v_ResultStr:='CreateInvoiceLine from Order';
                     SELECT EM_VENTAS_PERMITIRSALIDA INTO v_permitirsalida FROM C_ORDER WHERE C_ORDER_ID = ptr_ol.c_order_id;
                     IF (v_permitirsalida = 'N') THEN
-			RAISE NOTICE '%' , 'Entroooooooooooooooooooo';
 			INSERT
 			INTO C_INVOICELINE
 			(

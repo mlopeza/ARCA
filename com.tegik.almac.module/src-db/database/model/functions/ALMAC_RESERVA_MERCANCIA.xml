@@ -79,8 +79,7 @@ BEGIN
 	--Inserta el nuevo pedido o cotizacion si no existen o lo actualiza en caso de que exista
 	IF v_picke_id IS NULL THEN
 		v_picke_id = get_uuid();
-		INSERT INTO ventas_pickexecute(ventas_pickexecute_id,ad_client_id,ad_org_id,isactive,created,createdby,updated,updatedby,pedido_cotizacion,description,pick,borrar,copiar,accion)
-		VALUES (v_picke_id,'0BD13E24E0F94596B61414BD72225EB8',p_org_id,'Y',now(),v_user_id,now(),v_user_id,p_num_ped_cot,'Cotización por Front End','N','N','N',v_peco);
+		INSERT INTO ventas_pickexecute(ventas_pickexecute_id,ad_client_id,ad_org_id,isactive,created,createdby,updated,updatedby,pedido_cotizacion,description,pick,borrar,copiar,accion) VALUES (v_picke_id,'0BD13E24E0F94596B61414BD72225EB8',p_org_id,'Y',now(),v_user_id,now(),v_user_id,p_num_ped_cot,'Cotización por Front End','N','N','N',v_peco);
 	END IF;
 		
 

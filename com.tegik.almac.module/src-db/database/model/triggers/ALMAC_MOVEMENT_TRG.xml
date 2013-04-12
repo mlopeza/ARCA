@@ -26,16 +26,27 @@ v_cuenta NUMBER;
     
 BEGIN
     
-    IF AD_isTriggerEnabled()='N' THEN RETURN;
+    IF AD_isTriggerEnabled()='N' THEN 
+	IF DELETING THEN 
+		RETURN OLD; 
+	ELSE 
+		RETURN NEW; 
+	END IF; 
     END IF;
 
     SELECT COUNT(*) INTO v_cuenta FROM M_MOVEMENTLINE WHERE M_MOVEMENT_ID = :NEW.M_MOVEMENT_ID;
 
     IF (v_cuenta > 0 AND :NEW.EM_ALMAC_LOCATOR_ID <> :OLD.EM_ALMAC_LOCATOR_ID) THEN
-	RAISE NO_DATA_FOUND;
+	RAISE NO_DATA_FOUND;--OBTG:-20000--
     END IF;
 
     
+    IF DELETING THEN 
+	RETURN OLD; 
+    ELSE 
+	RETURN NEW; 
+    END IF; 
+
 END ALMAC_MOVEMENT_TRG
 ]]></body>
     </trigger>

@@ -27,7 +27,10 @@
   TYPE RECORD IS REF CURSOR;
     Cur_Parameter RECORD;
     cur_iol RECORD;
+    cur_io  RECORD;
     v_Record_ID VARCHAR2(32):=NULL;
+    v_Pedido_ID VARCHAR2(32):=NULL;
+    
     v_count NUMBER;
     v_movDistrib NUMBER;
 vResult VARCHAR(32);
@@ -66,7 +69,7 @@ BEGIN
           LOOP
             v_Record_ID:=Cur_Parameter.Record_ID;
           END LOOP; -- Get Parameter
-
+	
 	FOR cur_iol IN
 	(SELECT * FROM M_INOUTLINE WHERE M_INOUT_ID = v_Record_ID)
 	LOOP

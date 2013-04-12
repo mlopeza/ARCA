@@ -132,6 +132,7 @@ public class CargaIO extends IdlService {
 	private AttributeSet tile,slab; 
 	private SimpleDateFormat formatter = new SimpleDateFormat("dd-MMM-yy");
 	private BusinessPartner arcamexico;
+	
 	private Location bpLocation;
 	private Organization org;
 	private DocumentType dt;
@@ -193,7 +194,7 @@ public class CargaIO extends IdlService {
                         pHash.clear();
                         containerHash.clear();
                         linesHash.clear();
-			//completaCabeceras();
+			completaCabeceras();
 			headerHash.clear();
 			return true;
 		}

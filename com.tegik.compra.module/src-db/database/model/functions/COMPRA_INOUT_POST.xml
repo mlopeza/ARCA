@@ -84,6 +84,7 @@
     v_BreakDown VARCHAR2(60) ;
     v_ActualQty NUMBER;
     v_QtyAux NUMBER;
+    v_Cuenta NUMBER;
     v_Count NUMBER:=0;
     v_Line VARCHAR2(10) ;
     v_OrderID_old VARCHAR2(32);
@@ -301,6 +302,16 @@
           */
 
           IF(Cur_InOut.Processed='N' AND Cur_InOut.DocStatus='DR' AND Cur_InOut.DocAction='CO') THEN
+		IF Cur_InOut.em_almac_ventas_pick_id IS NULL AND Cur_InOut.issotrx = 'Y' THEN
+			RAISE NO_DATA_FOUND ;--OBTG:-20000--
+		END IF;
+
+		SELECT COUNT(*) INTO v_cuenta FROM (select m_inoutline_id, em_almac_preciom2 FROM M_INOUTLINE WHERE M_INOUT_ID = Cur_InOut.M_InOut_ID AND em_almac_preciom2 IS NULL) iol
+		LEFT JOIN almac_distrib ad ON ad.m_inoutline_id = iol.m_inoutline_id AND (ad.costo_pieza is null OR iol.em_almac_preciom2 is null);
+		
+		IF (v_cuenta > 0 ) AND  Cur_InOut.issotrx = 'Y' THEN
+			RAISE_APPLICATION_ERROR(-20000, 'No se puede completar la salida si alguna pieza no tiene precio.') ;
+		END IF;
             -- For all active shipment lines
             v_ResultStr:='HeaderLoop-1';
             SELECT COUNT(*) INTO v_Aux

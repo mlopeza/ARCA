@@ -21,7 +21,11 @@ BEGIN
 	:new.NAME = v_pais || ' - ' || v_puerto ||'/'|| v_city;
   END IF;
 
-IF DELETING THEN RETURN OLD; ELSE RETURN NEW; END IF;
+	IF DELETING THEN 
+		RETURN OLD; 
+	ELSE 
+		RETURN NEW; 
+	END IF;
 END ALMAC_PORT_CONEX_TRG
 ]]></body>
     </trigger>

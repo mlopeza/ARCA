@@ -30,6 +30,7 @@
   * Description:
   ************************************************************************/
 BEGIN
+  DBMS_OUTPUT.PUT_LINE( 'ENTRADA');
   PERFORM ALMAC_VALIDA_LINEAS(PInstance_ID) ;
   M_INOUT_POST(PInstance_ID, NULL) ;
   VENTAS_REASIGNACION_COMPRA(PInstance_ID);

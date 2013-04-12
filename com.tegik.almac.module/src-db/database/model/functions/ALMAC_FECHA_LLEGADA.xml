@@ -48,8 +48,7 @@ BEGIN
 	ELSIF v_gdl = 'Y' THEN
 		v_city = 'GDL';
 	ELSE
-		RAISE NOTICE '%' , 'El almacen no esta configurado m_warehouse_id:<'||p_warehouse||'>';
-		--Si no se encuentra en ninguno de estos se manda ocmo que no esta configurado
+		--RAISE NOTICE '%' , 'El almacen no esta configurado m_warehouse_id:<'||p_warehouse||'>';
 		RETURN NULL;
 	END IF;
 

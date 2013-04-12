@@ -61,9 +61,6 @@
         <default/>
         <onCreateDefault/>
       </column>
-      <foreign-key foreignTable="ALMAC_ATADO" name="ALMAC_COMPRA_PACKINGLIST_ATADO">
-        <reference local="EM_ALMAC_ATADO_ID" foreign="ALMAC_ATADO_ID"/>
-      </foreign-key>
       <foreign-key foreignTable="M_ATTRIBUTESETINSTANCE" name="COMPRA_ATTRIBUTE_KEY">
         <reference local="M_ATTRIBUTESETINSTANCE_ID" foreign="M_ATTRIBUTESETINSTANCE_ID"/>
       </foreign-key>

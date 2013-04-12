@@ -84,7 +84,7 @@
 	IF v_pedido IS NOT NULL 
 		THEN v_pedidocotizacion = v_pedido;
 	ELSE  
-		RAISE NO_DATA_FOUND;
+		RAISE NO_DATA_FOUND;--OBTG:-20000--
 	END IF;
 	v_numline=10;
 	----SELECT * FROM m_attributesetinstance WHERE ventas_pickexecute_id = v_pickexecute_id
