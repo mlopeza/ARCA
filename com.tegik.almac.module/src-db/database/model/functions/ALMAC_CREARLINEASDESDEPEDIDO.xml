@@ -84,7 +84,7 @@
 	IF v_pedido IS NOT NULL 
 		THEN v_pedidocotizacion = v_pedido;
 	ELSE  
-		RAISE NO_DATA_FOUND;--OBTG:-20000--
+		RAISE_APPLICATION_ERROR(-20000,'@ALMAC_100@');
 	END IF;
 	v_numline=10;
 	----SELECT * FROM m_attributesetinstance WHERE ventas_pickexecute_id = v_pickexecute_id
@@ -103,7 +103,6 @@
 	v_atribute.m_product_id, v_atribute.m_locator_id, v_atribute.m_attributesetinstance_id, v_numline, '100', v_atribute.qtyonhand);
 	v_numline=v_numline+10;
 	END LOOP;
-	DBMS_OUTPUT.PUT_LINE('almac_crearlineasdesdepedido-');
 	AD_UPDATE_PINSTANCE(p_PInstance_ID, NULL, 'N', 1, 'Se agregaron correctamente las lineas.');
 	RETURN;
 	  

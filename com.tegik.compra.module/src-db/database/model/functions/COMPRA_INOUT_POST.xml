@@ -303,7 +303,7 @@
 
           IF(Cur_InOut.Processed='N' AND Cur_InOut.DocStatus='DR' AND Cur_InOut.DocAction='CO') THEN
 		IF Cur_InOut.em_almac_ventas_pick_id IS NULL AND Cur_InOut.issotrx = 'Y' THEN
-			RAISE NO_DATA_FOUND ;--OBTG:-20000--
+			RAISE_APPLICATION_ERROR(-20000, '@ALMAC_100@ ');
 		END IF;
 
 		SELECT COUNT(*) INTO v_cuenta FROM (select m_inoutline_id, em_almac_preciom2 FROM M_INOUTLINE WHERE M_INOUT_ID = Cur_InOut.M_InOut_ID AND em_almac_preciom2 IS NULL) iol
