@@ -1,0 +1,12 @@
+GRANT SELECT ON TABLE almac_crm_organizacion TO crm;
+GRANT SELECT ON TABLE almac_piezasconprecio TO crm;
+GRANT SELECT ON TABLE almac_crm_nom_comercial TO crm;
+GRANT SELECT ON TABLE almac_crm_prodnomcom TO crm;
+GRANT SELECT ON TABLE almac_crm_inventario TO crm;
+GRANT SELECT ON TABLE ad_org TO crm;
+GRANT SELECT ON TABLE ad_user TO crm;
+GRANT SELECT ON TABLE m_warehouse TO crm;
+GRANT SELECT ON TABLE m_product_category TO crm;
+GRANT SELECT ON TABLE m_product TO crm;
+GRANT SELECT ON TABLE compra_contenedor TO crm;
+GRANT SELECT ON TABLE almac_crm_servicios TO crm;
