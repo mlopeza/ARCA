@@ -72,5 +72,8 @@
       <foreign-key foreignTable="DMPROD_USO" name="EM_DMPROD_USO_FK">
         <reference local="EM_DMPROD_USO_ID" foreign="DMPROD_USO_ID"/>
       </foreign-key>
+      <index name="EM_DMPROD_TILEOSLAB" unique="false">
+        <index-column name="EM_DMPROD_TILEOSLAB"/>
+      </index>
     </table>
   </database>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+  <database name="MODIFIED TABLE M_STORAGE_DETAIL">
+    <table name="M_STORAGE_DETAIL" primaryKey="M_STORAGE_DETAIL_KEY">
+      <index name="EM_ALMAC_SERACH_PIEZAS_IDX" unique="false">
+        <index-column name="AD_CLIENT_ID"/>
+        <index-column name="M_ATTRIBUTESETINSTANCE_ID"/>
+        <index-column name="QTYONHAND"/>
+      </index>
+    </table>
+  </database>

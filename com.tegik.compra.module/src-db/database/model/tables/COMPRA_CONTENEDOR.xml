@@ -114,6 +114,9 @@
       <foreign-key foreignTable="COMPRA_EMBARQUE" name="COMPRA_INOUT_BP_FK">
         <reference local="COMPRA_EMBARQUE_ID" foreign="COMPRA_EMBARQUE_ID"/>
       </foreign-key>
+      <index name="COMPRA_ESTADO_IDX" unique="false">
+        <index-column name="ESTADO"/>
+      </index>
       <unique name="COMPRA_CONTENEDOR_DOC">
         <unique-column name="AD_CLIENT_ID"/>
         <unique-column name="DOCUMENTNO"/>

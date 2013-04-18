@@ -38,12 +38,12 @@
     Cur_Parameter RECORD;
   v_M_InOut_ID VARCHAR(32);
   ----
-  v_pickexecute_id VARCHAR(32);
+  v_pickexecute_id VARCHAR2(32);
   v_atribute RECORD;
-  v_inoutline_id VARCHAR(32);
-  v_pedido VARCHAR(32);
-  v_cotizacion VARCHAR(32);
-  v_pedidocotizacion VARCHAR(32);
+  v_inoutline_id VARCHAR2(32);
+  v_pedido VARCHAR2(32):=NULL;
+  v_cotizacion VARCHAR2(32);
+  v_pedidocotizacion VARCHAR2(32);
   v_numline NUMBER;
   ----
   v_inout VARCHAR(200);
@@ -68,19 +68,15 @@
       ORDER BY p.SeqNo
       )
     LOOP
-      IF(Cur_Parameter.ParameterName='pickexecute_cotizaciones') THEN
+      IF(Cur_Parameter.ParameterName='pickexecute_pedidos') THEN
         v_pedido:=Cur_Parameter.P_String;
-        DBMS_OUTPUT.PUT_LINE('  pickexecute_cotizaciones=' || v_pedido) ;
-      END IF;
-            IF(Cur_Parameter.ParameterName='pickexecute_pedidos') THEN
-        v_pedido:=Cur_Parameter.P_String;
-        DBMS_OUTPUT.PUT_LINE('  pickexecute_pedidos=' || v_cotizacion) ;
       END IF;
       v_Record_ID:=Cur_Parameter.Record_ID;
       v_M_InOut_ID=v_Record_ID;
     END LOOP; -- Get Parameter
     -- Read Information from Record
    /****/
+	SELECT em_almac_ventas_pick_id INTO v_pedido FROM M_InOut where M_Inout_ID = v_M_InOut_ID;
 	IF v_pedido IS NOT NULL 
 		THEN v_pedidocotizacion = v_pedido;
 	ELSE  
