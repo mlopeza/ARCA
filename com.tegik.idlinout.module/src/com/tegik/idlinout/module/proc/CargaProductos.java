@@ -211,7 +211,10 @@ public class CargaProductos extends IdlService {
 				    new Parameter("Precio IDEAL USD DF", Parameter.STRING),			        //35
 				    new Parameter("Precio MIN USD MTY", Parameter.STRING),			        //36
 				    new Parameter("Precio IDEAL USD MTY", Parameter.STRING),			      //37
-				    new Parameter("Organizacion", Parameter.STRING) 				            //38
+				    new Parameter("Organizacion", Parameter.STRING),//38
+				    new Parameter("Color",Parameter.STRING),
+				    new Parameter("Areas",Parameter.STRING),
+				    new Parameter("Uso / Aplicacion",Parameter.STRING)
 			};
 		}
 
@@ -220,7 +223,7 @@ public class CargaProductos extends IdlService {
 		//Se validan cada uno de los campos
 		//Los campos comentados son dle producto, que pudieron no venir en la carga
 		validator.checkNotNull(validator.checkString(values[0], 60), "PRODUCTO - NOMBRE CONCATENADO");
-		validator.checkNotNull(validator.checkString(values[1], 60), "SKU Arca");
+		//validator.checkNotNull(validator.checkString(values[1], 60), "SKU Arca");
 		//validator.checkNotNull(validator.checkString(values[2], 60), "SKU Actual Arca DF");
 		//validator.checkNotNull(validator.checkString(values[3], 60), "Nombre Comercial Material");
 		//validator.checkNotNull(validator.checkString(values[4], 60), "Nombre Origen Material");
@@ -231,9 +234,9 @@ public class CargaProductos extends IdlService {
 		//validator.checkNotNull(validator.checkString(values[9], 60), "Acabado");
 		validator.checkNotNull(validator.checkString(values[10], 60), "Categoria Piedra");
 		//validator.checkNotNull(validator.checkString(values[11], 60), "Tipo Medida");
-		validator.checkNotNull(validator.checkString(values[12], 60), "Largo");
-		validator.checkNotNull(validator.checkString(values[13], 60), "Ancho");
-		validator.checkNotNull(validator.checkString(values[14], 60), "Espesor");
+		//validator.checkNotNull(validator.checkString(values[12], 60), "Largo");
+		//validator.checkNotNull(validator.checkString(values[13], 60), "Ancho");
+		//validator.checkNotNull(validator.checkString(values[14], 60), "Espesor");
 		validator.checkNotNull(validator.checkString(values[15], 60), "Costo FOB Pais de Origen");
 		validator.checkNotNull(validator.checkString(values[16], 60), "Moneda Compra Material FOB");
 		//validator.checkNotNull(validator.checkString(values[18], 60), "Costo FOB Pais Origen en USD");
@@ -243,9 +246,9 @@ public class CargaProductos extends IdlService {
 		if(!(((String)values[19]).trim().toUpperCase()).equals("NACIONAL"))
 			validator.checkNotNull(validator.checkString(values[21], 60), "Puerto Embarque Pais Origen");
 
-		validator.checkBigDecimal(values[12]); //Largo
-		validator.checkBigDecimal(values[13]); //Ancho
-		validator.checkBigDecimal(values[14]); //Espesor
+		//validator.checkBigDecimal(values[12]); //Largo
+		//validator.checkBigDecimal(values[13]); //Ancho
+		//validator.checkBigDecimal(values[14]); //Espesor
 		validator.checkBigDecimal(values[15]); //Costo FOB en moneda Origen
 		validator.checkBigDecimal(values[18]); //Costo FOB en USD
 		validator.checkBigDecimal(((String)values[20]).replaceAll("[^0-9|^\\.]","")); //Arancel
@@ -255,6 +258,12 @@ public class CargaProductos extends IdlService {
 
 	@Override
 		public BaseOBObject internalProcess(Object... values) throws Exception {
+	                if(values[12]==null)
+	                  values[12] = (Object)"0";
+	                if(values[13]==null)
+	                  values[13] = (Object)"0";
+	                if(values[14]==null)
+	                  values[14] = (Object)"0";
 			//Verifica si se esta iniciando una nueva transaccion
 			if(getRecordsProcessed() == 0){
 				//Se vacia la tabla de Hash de todos los objetos
@@ -364,6 +373,7 @@ public class CargaProductos extends IdlService {
 				p.setStocked(true);
 				p.setPurchase(true);
 				p.setSale(true);
+				p.setAlmacPRevisado(true);
 				p.setBillOfMaterials(false);
 				p.setPrintDetailsOnInvoice(false);
 				p.setPrintDetailsOnPickList(false);
@@ -373,9 +383,11 @@ public class CargaProductos extends IdlService {
 				p = pList.get(0);
 			}
 		}
-
-		p.setSKU(((String)v[1]).trim().toUpperCase());
+		
+		if(v[1] != null && !(((String)v[1]).trim()).equals(""))
+		  p.setSKU(((String)v[1]).trim().toUpperCase());
 		p.setName(((String)v[0]).trim().toUpperCase());
+		p.setAlmacPRevisado(true);
 		if(v[10] != null && !(((String)v[10]).trim()).equals(""))
 			p.setProductCategory(findProductCategory(((String)v[10]).trim()));
 		if(v[7] != null && !(((String)v[7]).trim()).equals(""))
@@ -405,8 +417,10 @@ public class CargaProductos extends IdlService {
 		}else{
 			p.setDmprodIsarancel(false);
 		}
-		p.setDmprodHeight((new BigDecimal(((String)v[12]).trim())).divide(new BigDecimal("100"),5,BigDecimal.ROUND_CEILING));
-		p.setDmprodWidth((new BigDecimal(((String)v[13]).trim())).divide(new BigDecimal("100"),5,BigDecimal.ROUND_CEILING));
+		if(v[12]!=null && !(((String)v[12]).trim()).equals("") )
+		  p.setDmprodHeight((new BigDecimal(((String)v[12]).trim())).divide(new BigDecimal("100"),5,BigDecimal.ROUND_CEILING));
+		if(v[13]!=null && !(((String)v[13]).trim()).equals(""))
+		  p.setDmprodWidth((new BigDecimal(((String)v[13]).trim())).divide(new BigDecimal("100"),5,BigDecimal.ROUND_CEILING));
 
 		if(((((String)v[16]).trim()).trim().toUpperCase()).equals("EUR")){
 			p.setAlmacFobUsd((p.getDmprodPreciofob()).multiply((OBContext.getOBContext().getCurrentClient().getAlmacCrateUsdeur())));
@@ -417,12 +431,14 @@ public class CargaProductos extends IdlService {
 		}
 		if(v[9] != null && !(((String)v[9]).trim()).equals(""))
 			p.setDmprodAcabado(Levenshtein.execute((String)v[9]));
-
+		p.setDmprodColor(this.findColor((String)v[39]));
+		//p.setDescription("Creado/Actualizado por Carga Automática");
+		p.setAlmacPRevisado(true);
 		obdal.save(p);
 		pHash.put(value,p);
 		if(!(((String)v[19]).trim().toUpperCase()).equals("NACIONAL"))
 			updateRoutes(p,(String)v[21]);
-
+		obdal.getInstance().flush();
 		return p;
 	}
 
@@ -724,5 +740,16 @@ public class CargaProductos extends IdlService {
 		}
 		return pList.get(0);
 	}
-
+	
+	//dmprodcolor
+        private dmprodcolor findColor(String name){
+          OBCriteria<dmprodcolor> pQ = obdal.createCriteria(dmprodcolor.class);
+          pQ.add(Expression.ilike(dmprodcolor.PROPERTY_NAME, name.trim().toUpperCase(), MatchMode.ANYWHERE));
+          List<dmprodcolor> pList = pQ.list();
+          //Si no encuentra la moneda regresa un error y se interrumpe el proceso
+          if(pList.isEmpty()){
+                  throw new OBException(Utility.messageBD(conn, "No existe el color <"+name+"> linea: <"+(getRecordsProcessed()+2)+">" , vars.getLanguage()));
+          }
+          return pList.get(0);
+        }
 }

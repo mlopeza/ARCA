@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
   <database name="TRIGGER ALMAC_PRODUCT_TS_TRG">
     <trigger name="ALMAC_PRODUCT_TS_TRG" table="M_PRODUCT" fires="before" insert="true" update="true" delete="false" foreach="row">
-      <body><![CDATA[ v_name VARCHAR(60);    
+      <body><![CDATA[ v_name VARCHAR2(60);  
+ v_code VARCHAR2(60):=NULL;
+ v_change NUMBER:=0;
 BEGIN
     
     IF AD_isTriggerEnabled()='N' THEN RETURN;
@@ -19,6 +21,22 @@ BEGIN
 		:NEW.em_dmprod_tileoslab = 'Tile';
 	ELSIF v_name = 'SLAB' THEN
 		:NEW.em_dmprod_tileoslab = 'Slab';
+	END IF;
+
+	IF :NEW.EM_Dmprod_Preciofob IS NOT NULL AND :NEW.EM_Almac_C_Currency_ID IS NOT NULL THEN
+		SELECT COALESCE(TRIM(UPPER(iso_code)),'USD') into v_code FROM C_CURRENCY WHERE C_CURRENCY_ID = :NEW.EM_Almac_C_Currency_ID;
+		IF v_code = 'EUR' THEN
+		 SELECT EM_Almac_Crate_Usdeur INTO v_change FROM AD_CLIENT WHERE AD_CLIENT_ID = :NEW.AD_CLIENT_ID;
+		 :NEW.EM_Almac_Fob_Usd = :NEW.EM_Dmprod_Preciofob * COALESCE(v_change,0);
+		ELSIF v_code = 'MXN' THEN
+		 SELECT EM_Almac_Crate_Usdmxn INTO v_change FROM AD_CLIENT WHERE AD_CLIENT_ID = :NEW.AD_CLIENT_ID;
+		 :NEW.EM_Almac_Fob_Usd = :NEW.EM_Dmprod_Preciofob / COALESCE(v_change,0);
+		ELSE 
+			:NEW.EM_Almac_Fob_Usd = :NEW.EM_Dmprod_Preciofob;
+		END IF;
+	ELSE
+		:NEW.EM_Dmprod_Preciofob = 0;
+		:NEW.EM_Almac_Fob_Usd = 0;
 	END IF;
 
 END ALMAC_PRODUCT_TS_TRG
