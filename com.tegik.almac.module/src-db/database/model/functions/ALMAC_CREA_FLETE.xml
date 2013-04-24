@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_CREA_FLETE">
+    <function name="ALMAC_CREA_FLETE" type="VARCHAR">
+      <parameter name="p_anden" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_flete" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_asi_list" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_horario" type="TIMESTAMP" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[TYPE RECORD IS REF CURSOR;
+Cur_Parameter RECORD;
+BEGIN 
+
+	IF p_horario IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'El horario no puede ser nulo.');
+	END IF;
+	
+	IF(p_anden IS NULL OR char_length(p_anden) = 0) THEN
+		RAISE_APPLICATION_ERROR(-20000, 'El anden no puede ser nulo.');
+	END IF;
+	
+	IF(p_flete IS NULL OR char_length(p_flete) = 0) THEN
+		RAISE_APPLICATION_ERROR(-20000, 'El flete no puede ser nulo.');
+	END IF;
+
+	--Verifica que todos los atributos sean correctos
+	FOR Cur_Parameter IN 
+		SELECT regexp_split_to_table(p_asi_list,',') AS asi_id
+	LOOP
+		IF Cur_Parameter.asi_id IS NULL OR char_length(Cur_Parameter.asi_id) <> 32 THEN
+			RAISE_APPLICATION_ERROR(-20000, 'El ID del Huacal o Slab es invalido.(Debe ser igual a 32 caracteres) <'||COALESCE(Cur_Parameter.asi_id,'NULL')||'>');
+		END IF;
+	END LOOP;
+
+	--Actualizar todos los atributos en el servidor
+	UPDATE M_ATTRIBUTESETINSTANCE SET em_almac_anden = p_anden, em_almac_flete = p_flete,em_almac_flete_fecha = p_horario WHERE M_ATTRIBUTESETINSTANCE_ID IN (SELECT regexp_split_to_table(p_asi_list,','));
+	
+	RETURN 'OK';
+EXCEPTION 
+WHEN OTHERS THEN
+  RAISE;
+END ALMAC_CREA_FLETE
+]]></body>
+    </function>
+  </database>

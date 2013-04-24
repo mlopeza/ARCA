@@ -393,7 +393,7 @@ public class CargaProductos extends IdlService {
 		if(v[7] != null && !(((String)v[7]).trim()).equals(""))
 			p.setDmprodTipopiedra(findTipoPiedra((String)v[7]));
 		p.setSearchKey(((String)v[0]).trim());
-		if(v[1] != null && !(((String)v[1]).trim()).equals(""))
+		if(v[3] != null && !(((String)v[3]).trim()).equals(""))
 			p.setName2(((String)v[3]).trim().toUpperCase());
 		if(!(((String)v[19]).trim().toUpperCase()).equals("NACIONAL"))
 			p.setAlmacPuertos(findPuerto2(embarque));

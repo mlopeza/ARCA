@@ -302,7 +302,7 @@
           */
 
           IF(Cur_InOut.Processed='N' AND Cur_InOut.DocStatus='DR' AND Cur_InOut.DocAction='CO') THEN
-		IF Cur_InOut.em_almac_ventas_pick_id IS NULL AND Cur_InOut.issotrx = 'Y' THEN
+		IF Cur_InOut.em_almac_ventas_pick_id IS NULL AND Cur_InOut.C_ORDER_ID IS NULL  AND Cur_InOut.issotrx = 'Y' THEN
 			RAISE_APPLICATION_ERROR(-20000, '@ALMAC_100@ ');
 		END IF;
 

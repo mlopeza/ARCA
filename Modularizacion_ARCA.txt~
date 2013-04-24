@@ -3,7 +3,7 @@ Comentar las siguientes cosas del Core
 1.-Buscar el texto "QtyInvoicedHigherOrdered"
 En las funciones c_ordline_chk_restrictions_trg y c_invoice_post
 
-2.-Buscar "MovementQtyCheck"
+2.-Buscar m_inoutline_trg
 En la funcion  m_inoutline_trg
 
 

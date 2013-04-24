@@ -69,6 +69,26 @@
         <default/>
         <onCreateDefault/>
       </column>
+      <column name="EM_ALMAC_PEDIDO" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_ANDEN" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_PEDIDO_FECHA" primaryKey="false" required="false" type="TIMESTAMP" size="7" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_FLETE" primaryKey="false" required="false" type="VARCHAR" size="60" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
+      <column name="EM_ALMAC_FLETE_FECHA" primaryKey="false" required="false" type="TIMESTAMP" size="7" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
       <foreign-key foreignTable="ALMAC_ATADO" name="EM_ALMAC_ASI_ATADO">
         <reference local="EM_ALMAC_ATADO_ID" foreign="ALMAC_ATADO_ID"/>
       </foreign-key>

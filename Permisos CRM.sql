@@ -10,3 +10,7 @@ GRANT SELECT ON TABLE m_product_category TO crm;
 GRANT SELECT ON TABLE m_product TO crm;
 GRANT SELECT ON TABLE compra_contenedor TO crm;
 GRANT SELECT ON TABLE almac_crm_servicios TO crm;
+ALTER FUNCTION almac_reserva_mercancia(character varying, character varying, character varying, character varying, character) SECURITY DEFINER;
+ALTER FUNCTION almac_quita_mercancia(character varying) SECURITY DEFINER;
+ALTER FUNCTION almac_crea_pedido(character varying, character varying, timestamp without time zone) SECURITY DEFINER;
+ALTER FUNCTION almac_crea_flete(character varying, character varying, character varying, timestamp without time zone) SECURITY DEFINER;
