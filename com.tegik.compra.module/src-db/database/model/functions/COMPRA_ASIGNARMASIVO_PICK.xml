@@ -59,6 +59,8 @@
   v_uuid VARCHAR(32);--OBTG:VARCHAR2--
   v_atado VARCHAR(60);--OBTG:VARCHAR2--
   v_atado_id VARCHAR(32);--OBTG:VARCHAR2-
+  v_attribute_id VARCHAR(32);--OBTG:VARCHAR2-
+  v_att_name VARCHAR(60);--OBTG:VARCHAR2-
   BEGIN
 
     --  Update AD_PInstance
@@ -110,7 +112,7 @@
     END LOOP; -- Get Parameter
     -- Read Information from Record
 
-	SELECT TRIM(UPPER(EM_DMPROD_TILEOSLAB)) INTO v_tileoslab FROM M_PRODUCT WHERE M_PRODUCT_ID  = v_producto LIMIT 1;
+	SELECT TRIM(UPPER(EM_DMPROD_TILEOSLAB)),m_attributeset_id INTO v_tileoslab, v_attribute_id FROM M_PRODUCT WHERE M_PRODUCT_ID  = v_producto LIMIT 1;
 
 	SELECT * INTO cur_contenedor FROM compra_contenedor WHERE compra_contenedor_id = v_Record_ID;
 	
@@ -133,7 +135,13 @@
         v_variable = 1;
 	WHILE v_variable <= v_cantidad LOOP
 		IF (v_tileoslab = UPPER('Tile')) THEN
-		
+			--En caso de ser sellador
+		        SELECT TRIM(UPPER(NAME)) INTO v_att_name FROM M_ATTRIBUTESET WHERE M_ATTRIBUTESET_ID = v_attribute_id;
+		        
+		        IF(v_att_name = 'SELLADOR') THEN
+				v_m2 = v_cantidad;
+		        END IF;
+		        
 			IF (v_m2 IS NULL) THEN
 				RAISE_APPLICATION_ERROR(-20000, 'Los metros cuadrados no pueden estar vacíos');
 			END IF;

@@ -19,6 +19,10 @@ BEGIN
 	--Asigna Tile o Slab
 	IF v_name = 'TILE' THEN
 		:NEW.em_dmprod_tileoslab = 'Tile';
+	ELSIF v_name = 'SELLADOR' THEN
+		:NEW.em_dmprod_tileoslab = 'Tile';
+		:NEW.em_dmprod_height = 1;
+		:NEW.em_dmprod_width  = 1;
 	ELSIF v_name = 'SLAB' THEN
 		:NEW.em_dmprod_tileoslab = 'Slab';
 	END IF;
