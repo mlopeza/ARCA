@@ -70,6 +70,14 @@
       <oldValue><![CDATA[30]]></oldValue>
       <newValue><![CDATA[60]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="AD_COLUMN" columnname="AD_REFERENCE_ID" pkRow="3537">
+      <oldValue><![CDATA[30]]></oldValue>
+      <newValue><![CDATA[18]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_COLUMN" columnname="AD_REFERENCE_VALUE_ID" pkRow="3537">
+      <oldValue><![CDATA[31]]></oldValue>
+      <newValue><![CDATA[4D73FF783C0F4D43A6D9CFB2DFCE9EBE]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="AD_COLUMN" columnname="AD_REFERENCE_ID" pkRow="3540">
       <oldValue><![CDATA[29]]></oldValue>
       <newValue><![CDATA[800019]]></newValue>
