@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+  <database name="VIEW ALMAC_PIEZASCAMBIO">
+    <view name="ALMAC_PIEZASCAMBIO"><![CDATA[SELECT sd.m_storage_detail_id AS almac_piezascambio_id, w.ad_client_id, w.ad_org_id, sd.isactive, sd.created, sd.createdby, sd.updated, sd.updatedby, sd.m_product_id, sd.m_locator_id, sd.m_attributesetinstance_id, sd.c_uom_id, sd.m_product_uom_id, sd.qtyonhand, sd.preqtyonhand, 0 AS new_width, 0 AS new_height, 1 AS new_qty, 'N' AS selected FROM m_storage_detail sd JOIN m_product p ON p.m_product_id = sd.m_product_id AND upper(p.em_dmprod_tileoslab) = 'SLAB' JOIN m_locator loc ON loc.m_locator_id = sd.m_locator_id JOIN m_warehouse w ON w.m_warehouse_id = loc.m_warehouse_id WHERE sd.qtyonhand > 0]]></view>
+  </database>

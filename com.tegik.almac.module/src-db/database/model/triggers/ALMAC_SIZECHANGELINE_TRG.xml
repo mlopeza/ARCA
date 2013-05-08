@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_SIZECHANGELINE_TRG">
+    <trigger name="ALMAC_SIZECHANGELINE_TRG" table="ALMAC_SIZECHANGELINE" fires="before" insert="false" update="true" delete="true" foreach="row">
+      <body><![CDATA[ 
+BEGIN
+    
+    IF AD_isTriggerEnabled()='N' 
+	THEN IF DELETING THEN 
+		RETURN OLD; 
+	ELSE 
+		RETURN NEW; 
+	END IF; 
+    END IF;
+
+
+    IF DELETING THEN 
+	IF (SELECT POSTED FROM ALMAC_SIZECHANGE WHERE ALMAC_SIZECHANGE_ID = :OLD.ALMAC_SIZECHANGE_ID LIMIT 1) = 'Y' THEN
+		RAISE_APPLICATION_ERROR(-20000, 'No se puede eliminar una linea de un documento ya procesado.') ;
+	END IF;
+	RETURN OLD; 
+    ELSIF UPDATING THEN
+	IF (SELECT POSTED FROM ALMAC_SIZECHANGE WHERE ALMAC_SIZECHANGE_ID = :OLD.ALMAC_SIZECHANGE_ID LIMIT 1) = 'Y' THEN
+		RAISE_APPLICATION_ERROR(-20000, 'No se puede modificar una linea de un documento ya procesado.') ;
+	END IF;
+	RETURN NEW; 
+    END IF; 
+END ALMAC_SIZECHANGELINE_TRG
+]]></body>
+    </trigger>
+  </database>

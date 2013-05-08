@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+  <database name="TRIGGER ALMAC_SIZECHANGE_TRG">
+    <trigger name="ALMAC_SIZECHANGE_TRG" table="ALMAC_SIZECHANGE" fires="before" insert="false" update="true" delete="true" foreach="row">
+      <body><![CDATA[ 
+BEGIN
+    
+    IF AD_isTriggerEnabled()='N' 
+	THEN IF DELETING THEN 
+		RETURN OLD; 
+	ELSE 
+		RETURN NEW; 
+	END IF; 
+    END IF;
+
+
+    IF DELETING THEN 
+	IF :OLD.POSTED = 'Y' THEN
+		RAISE_APPLICATION_ERROR(-20000, 'No se puede eliminar un documento ya procesado.') ;
+	END IF;
+	RETURN OLD; 
+    ELSIF UPDATING THEN
+	IF :OLD.POSTED = 'Y' THEN
+		RAISE_APPLICATION_ERROR(-20000, 'No se puede modificar un documento ya procesado.') ;
+	END IF;
+	IF :OLD.M_WAREHOUSE_ID <> :NEW.M_WAREHOUSE_ID AND (SELECT COUNT(*) FROM ALMAC_SIZECHANGELINE WHERE ALMAC_SIZECHANGE_ID = :OLD.ALMAC_SIZECHANGE_ID) <> 0 THEN
+		RAISE_APPLICATION_ERROR(-20000, 'No se puede cambiar el almacen si hay lineas en el documento.' || (SELECT COUNT(*) FROM ALMAC_SIZECHANGELINE WHERE ALMAC_SIZECHANGE_ID = :OLD.ALMAC_SIZECHANGE_ID)) ;
+	END IF;
+	RETURN NEW; 
+    END IF; 
+END ALMAC_SIZECHANGE_TRG
+]]></body>
+    </trigger>
+  </database>
