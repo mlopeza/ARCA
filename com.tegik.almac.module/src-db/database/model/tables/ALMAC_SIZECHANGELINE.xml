@@ -81,6 +81,10 @@
         <default><![CDATA[0]]></default>
         <onCreateDefault/>
       </column>
+      <column name="ALMAC_RAZONAJUSTE_ID" primaryKey="false" required="false" type="VARCHAR" size="32" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
       <foreign-key foreignTable="AD_CLIENT" name="ALMAC_SIZECHANGELINE_AD_CLIENT">
         <reference local="AD_CLIENT_ID" foreign="AD_CLIENT_ID"/>
       </foreign-key>
@@ -104,6 +108,9 @@
       </foreign-key>
       <foreign-key foreignTable="M_PRODUCT_UOM" name="ALMAC_SL_M_PRODUCT_UOM">
         <reference local="M_PRODUCT_UOM_ID" foreign="M_PRODUCT_UOM_ID"/>
+      </foreign-key>
+      <foreign-key foreignTable="ALMAC_RAZONAJUSTE" name="ALMAC_SL_RAZONAJUSTE_ID">
+        <reference local="ALMAC_RAZONAJUSTE_ID" foreign="ALMAC_RAZONAJUSTE_ID"/>
       </foreign-key>
       <check name="ALMAC_SIZECHANGELINE_1"><![CDATA[(((WIDTH IS NOT NULL) AND (HEIGHT IS NOT NULL)) AND (M_PRODUCT_ID IS NOT NULL)) AND (M_ATTRIBUTESETINSTANCE_ID IS NOT NULL)]]></check>
       <check name="ALMAC_SL_ISACT_CHECK"><![CDATA[ISACTIVE IN ('Y', 'N')]]></check>

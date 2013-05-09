@@ -61,15 +61,15 @@ public class ChangeSize extends DalBaseProcess {
       //Query para verificar que ninguno tenga medidas en 0
       OBCriteria<almac_sizechangeline> pQ = obdal.createCriteria(almac_sizechangeline.class);
       pQ.add(Restrictions.eq(almac_sizechangeline.PROPERTY_ALMACSIZECHANGE,header));
-      pQ.add(Restrictions.or(Restrictions.le(almac_sizechangeline.PROPERTY_HEIGHT, BigDecimal.ZERO), Restrictions.le(almac_sizechangeline.PROPERTY_WIDTH, BigDecimal.ZERO)));
+      pQ.add(Restrictions.or(Restrictions.isNull(almac_sizechangeline.PROPERTY_ALMACRAZONAJUSTE),Restrictions.or(Restrictions.le(almac_sizechangeline.PROPERTY_HEIGHT, BigDecimal.ZERO), Restrictions.le(almac_sizechangeline.PROPERTY_WIDTH, BigDecimal.ZERO))));
       List<almac_sizechangeline> sizeList = pQ.list();
       
       //Verifica que ningun producto tenga tamano menor a 0
       if(!sizeList.isEmpty()){
         final OBError msg = new OBError();
         msg.setType("Error");
-        msg.setTitle("Error en tamaño de piezas.");
-        msg.setMessage("Hay piezas con medidas menores o igual a 0.");
+        msg.setTitle("Error en las piezas.");
+        msg.setMessage("Hay piezas con medidas menores o igual a cero o sin una razón de cambio.");
         bundle.setResult(msg);        
         return;
       }
@@ -134,7 +134,7 @@ public class ChangeSize extends DalBaseProcess {
         invline.setLineNo(x.getLineNo());
         invline.setProduct(x.getProduct());
         invline.setStorageBin(x.getStorageBin());
-        invline.setQuantityCount((x.getHeight()).multiply(x.getWidth()));
+        invline.setQuantityCount(((x.getHeight().divide(new BigDecimal("100"),5,BigDecimal.ROUND_CEILING)).multiply(x.getWidth().divide(new BigDecimal("100"),5,BigDecimal.ROUND_CEILING))));
         //Pone la nueva cantidad en el sistema
         invline.setBookQuantity(sdList.get(0).getQuantityOnHand());
         invline.setUOM(x.getUOM());

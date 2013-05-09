@@ -13,6 +13,10 @@
         <default><![CDATA[N]]></default>
         <onCreateDefault/>
       </column>
+      <column name="EM_COMPRA_CAMBIAHUECO" primaryKey="false" required="false" type="CHAR" size="1" autoIncrement="false">
+        <default/>
+        <onCreateDefault/>
+      </column>
       <foreign-key foreignTable="COMPRA_CONTENEDOR" name="EM_COMPRA_INULIN_CON_FK">
         <reference local="EM_COMPRA_CONTENEDOR_ID" foreign="COMPRA_CONTENEDOR_ID"/>
       </foreign-key>

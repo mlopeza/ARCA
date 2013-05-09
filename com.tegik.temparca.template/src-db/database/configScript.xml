@@ -830,6 +830,10 @@
       <oldValue><![CDATA[140]]></oldValue>
       <newValue><![CDATA[80]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A1FC4D84E040007F01005FEC">
+      <oldValue><![CDATA[10]]></oldValue>
+      <newValue><![CDATA[20]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="PARENT_ID" pkRow="52118BF1A1FD4D84E040007F01005FEC">
       <oldValue><![CDATA[800237]]></oldValue>
       <newValue><![CDATA[51F2A2193448B600013448C4E1390006]]></newValue>
@@ -837,10 +841,6 @@
     <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A1FD4D84E040007F01005FEC">
       <oldValue><![CDATA[20]]></oldValue>
       <newValue><![CDATA[100]]></newValue>
-    </columnDataChange>
-    <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A1FF4D84E040007F01005FEC">
-      <oldValue><![CDATA[30]]></oldValue>
-      <newValue><![CDATA[10]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A2004D84E040007F01005FEC">
       <oldValue><![CDATA[20]]></oldValue>
@@ -1150,10 +1150,6 @@
       <oldValue><![CDATA[120]]></oldValue>
       <newValue><![CDATA[0]]></newValue>
     </columnDataChange>
-    <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A29F4D84E040007F01005FEC">
-      <oldValue><![CDATA[40]]></oldValue>
-      <newValue><![CDATA[20]]></newValue>
-    </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="PARENT_ID" pkRow="52118BF1A2B64D84E040007F01005FEC">
       <oldValue><![CDATA[800244]]></oldValue>
       <newValue><![CDATA[51F2A2193448B60001344908A8A70045]]></newValue>
@@ -1256,7 +1252,7 @@
     </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A2E34D84E040007F01005FEC">
       <oldValue><![CDATA[20]]></oldValue>
-      <newValue><![CDATA[40]]></newValue>
+      <newValue><![CDATA[30]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="PARENT_ID" pkRow="52118BF1A2E94D84E040007F01005FEC">
       <oldValue><![CDATA[800078]]></oldValue>
@@ -1504,7 +1500,7 @@
     </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A3554D84E040007F01005FEC">
       <oldValue><![CDATA[10]]></oldValue>
-      <newValue><![CDATA[30]]></newValue>
+      <newValue><![CDATA[20]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A3594D84E040007F01005FEC">
       <oldValue><![CDATA[10]]></oldValue>
@@ -1512,7 +1508,7 @@
     </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A3604D84E040007F01005FEC">
       <oldValue><![CDATA[30]]></oldValue>
-      <newValue><![CDATA[50]]></newValue>
+      <newValue><![CDATA[40]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="52118BF1A3614D84E040007F01005FEC">
       <oldValue><![CDATA[170]]></oldValue>
@@ -1653,6 +1649,18 @@
     <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="A14B428C6EF34B70B51C278E26BFDD43">
       <oldValue><![CDATA[100]]></oldValue>
       <newValue><![CDATA[120]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="B80D533A74D16959E040007F01001FE1">
+      <oldValue><![CDATA[60]]></oldValue>
+      <newValue><![CDATA[70]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="B961EABB2F042079E040007F0100177E">
+      <oldValue><![CDATA[50]]></oldValue>
+      <newValue><![CDATA[60]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="BE5C0D178E1D9892E040007F01004320">
+      <oldValue><![CDATA[70]]></oldValue>
+      <newValue><![CDATA[80]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="PARENT_ID" pkRow="C7FA62AA617111DEB014001B388C05F0">
       <oldValue><![CDATA[800075]]></oldValue>
