@@ -78,6 +78,10 @@
       <oldValue><![CDATA[31]]></oldValue>
       <newValue><![CDATA[4D73FF783C0F4D43A6D9CFB2DFCE9EBE]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="AD_COLUMN" columnname="ISUPDATEABLE" pkRow="3538">
+      <oldValue><![CDATA[N]]></oldValue>
+      <newValue><![CDATA[Y]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="AD_COLUMN" columnname="AD_REFERENCE_ID" pkRow="3540">
       <oldValue><![CDATA[29]]></oldValue>
       <newValue><![CDATA[800019]]></newValue>
@@ -134,6 +138,10 @@
       <oldValue><![CDATA[800008]]></oldValue>
       <newValue><![CDATA[800019]]></newValue>
     </columnDataChange>
+    <columnDataChange tablename="AD_COLUMN" columnname="POSITION" pkRow="3824DF0F4FCE41E1A71D3D633C1B66DA">
+      <oldValue><![CDATA[62]]></oldValue>
+      <newValue><![CDATA[61]]></newValue>
+    </columnDataChange>
     <columnDataChange tablename="AD_COLUMN" columnname="DEFAULTVALUE" pkRow="4F6FBAF242EE43B98923BAC82AB94165">
       <oldValue><![CDATA[@FIN_ISRECEIPT@]]></oldValue>
       <newValue><![CDATA[@PCOBRO_ISRECEIPT@]]></newValue>
@@ -153,6 +161,14 @@
     <columnDataChange tablename="AD_COLUMN" columnname="DESCRIPTION" pkRow="9C00E309AFF71768E040A8C0210133F3">
       <oldValue><![CDATA[x not implemented]]></oldValue>
       <newValue><![CDATA[The date that this record was last updated]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_COLUMN" columnname="POSITION" pkRow="B0D4715F1156E93FE040007F01005164">
+      <oldValue><![CDATA[60]]></oldValue>
+      <newValue><![CDATA[59]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_COLUMN" columnname="POSITION" pkRow="B151562D238BE05CE040007F010034F9">
+      <oldValue><![CDATA[61]]></oldValue>
+      <newValue><![CDATA[60]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="AD_TAB" columnname="WHERECLAUSE" pkRow="186">
       <oldValue><![CDATA[C_Order.IsSOTrx='Y']]></oldValue>
@@ -1661,6 +1677,10 @@
     <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="BE5C0D178E1D9892E040007F01004320">
       <oldValue><![CDATA[70]]></oldValue>
       <newValue><![CDATA[80]]></newValue>
+    </columnDataChange>
+    <columnDataChange tablename="AD_TREENODE" columnname="SEQNO" pkRow="BF4B7C5FF61945AAA6357DE56CA92157">
+      <oldValue><![CDATA[10]]></oldValue>
+      <newValue><![CDATA[30]]></newValue>
     </columnDataChange>
     <columnDataChange tablename="AD_TREENODE" columnname="PARENT_ID" pkRow="C7FA62AA617111DEB014001B388C05F0">
       <oldValue><![CDATA[800075]]></oldValue>
