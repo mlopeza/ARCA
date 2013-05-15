@@ -1,0 +1,368 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_CRM_CREACABECERA">
+    <function name="ALMAC_CRM_CREACABECERA" type="VARCHAR">
+      <parameter name="p_organizacion_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_cliente_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_warehouse_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_referencia_mobiik" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_vendedor_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_pedido" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_matricula_transporte" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_numero_entrega" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_nombre_chofer" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_moneda" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_tipo_camion" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_tonelaje_camion" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_transportista" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[V_MONEDA VARCHAR2(32):=NULL;
+V_PEDIDO VARCHAR2(32):=NULL;
+V_TRUCK VARCHAR2(32):=NULL;
+V_LPRECIOS VARCHAR2(32):=NULL;
+V_TRUCKLINE VARCHAR2(32):=NULL;
+V_DOC VARCHAR2(32):=NULL;
+V_SEQ VARCHAR2(60):=NULL;
+V_TONELAJE_CAMION VARCHAR2(60):=NULL;
+V_TIPO_CAMION VARCHAR2(60):=NULL;
+V_INC BPCHAR:=NULL;
+V_TRANSPORTISTA VARCHAR2(32):=NULL;
+V_CLIENT VARCHAR2(60):=NULL;
+V_IO_ID VARCHAR2(32):=NULL;
+BEGIN 
+
+	IF P_ORGANIZACION_ID IS NULL OR (SELECT AD_ORG_ID FROM AD_ORG WHERE AD_ORG_ID = P_ORGANIZACION_ID AND AD_CLIENT_ID = '0BD13E24E0F94596B61414BD72225EB8') IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'LA ORGANIZACION NO EXISTE O ES NULA.');
+	END IF;
+
+	--Verifica que los datos no sean nulos
+	IF P_CLIENTE_ID IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL CLIENTE NO PUEDE SER NULO.');
+	ELSIF (SELECT C_BPARTNER_ID FROM C_BPARTNER WHERE C_BPARTNER_ID = P_CLIENTE_ID AND AD_ORG_ID IN ('0',P_ORGANIZACION_ID)) IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL CLIENTE NO EXISTE O NO PERTENECE A LA MISMA ORGANIZACION.');
+	END IF;
+	
+	IF P_WAREHOUSE_ID IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL ALMACEN NO PUEDE SER NULO.');
+	ELSIF (SELECT M_WAREHOUSE_ID FROM M_WAREHOUSE WHERE M_WAREHOUSE_ID = P_WAREHOUSE_ID) IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL ALMACEN NO EXISTE.');
+	END IF;
+	
+	IF P_PEDIDO IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL PEDIDO NO PUEDE SER NULO.');
+	END IF;
+	
+	IF P_MATRICULA_TRANSPORTE IS NULL OR P_NUMERO_ENTREGA IS NULL OR P_NOMBRE_CHOFER IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'LA INFORMACION DEL TRANSPORTE NO PUEDE SER NULA.');
+	END IF;
+
+	IF P_MONEDA IS NULL THEN 
+		RAISE_APPLICATION_ERROR(-20000, 'EL TIPO DE MONEDA NO PUEDE SER NULO.');
+	END IF;
+	--INFORMACION DE CAMION
+	V_TIPO_CAMION = P_TIPO_CAMION;
+	V_TONELAJE_CAMION = P_TONELAJE_CAMION;
+	
+	IF  V_TIPO_CAMION IS NULL THEN
+		V_TIPO_CAMION = 'CAMION GENERICO';
+	END IF;
+
+	IF V_TONELAJE_CAMION IS NULL THEN
+		V_TONELAJE_CAMION = 'SIN TONELAJE';
+	END IF;
+
+	--SE BUSCA O SE CREA UN NUEVO TRANSPORTISTA
+	IF V_TRANSPORTISTA IS NULL THEN
+		SELECT  M_SHIPPER_ID INTO V_TRANSPORTISTA FROM M_SHIPPER WHERE NAME ILIKE '%GENÉRICO%' AND AD_CLIENT_ID = '0BD13E24E0F94596B61414BD72225EB8' LIMIT 1;
+	ELSE
+		SELECT M_SHIPPER_ID INTO V_TRANSPORTISTA FROM M_SHIPPER WHERE NAME = P_TRANSPORTISTA AND AD_CLIENT_ID = '0BD13E24E0F94596B61414BD72225EB8' LIMIT 1;
+		IF V_TRANSPORTISTA IS NULL THEN
+			V_TRANSPORTISTA = GET_UUID();
+			INSERT INTO m_shipper
+			(
+			m_shipper_id
+			, ad_client_id
+			, ad_org_id
+			, isactive
+			, created
+			, createdby
+			, updated
+			, updatedby
+			, name
+			, description
+			, c_bpartner_id
+			)
+			VALUES
+			(
+			V_TRANSPORTISTA
+			, '0BD13E24E0F94596B61414BD72225EB8'
+			, '0'
+			, 'Y'
+			, NOW()
+			, '100'
+			, NOW()
+			, '100'
+			, P_TRANSPORTISTA
+			, P_TRANSPORTISTA
+			, NULL
+			);
+		END IF;
+	END IF;
+	
+	
+	
+	--BUSCA EL PEDIDO DE VENTA
+	SELECT VENTAS_PICKEXECUTE_ID INTO V_PEDIDO FROM VENTAS_PICKEXECUTE IMMEDIATE WHERE TRIM(PEDIDO_COTIZACION) = TRIM(P_PEDIDO);
+	IF V_PEDIDO IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL PEDIDO NO EXISTE');
+	END IF;
+
+	SELECT C_CURRENCY_ID INTO V_MONEDA FROM C_CURRENCY WHERE ISO_CODE = UPPER(P_MONEDA);
+	IF V_MONEDA IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'LA MONEDA NO EXISTE');
+	END IF;
+
+	SELECT M_PRICELIST_ID INTO V_LPRECIOS FROM M_PRICELIST WHERE ISSOPRICELIST = 'Y' AND C_CURRENCY_ID = V_MONEDA AND AD_CLIENT_ID = '0BD13E24E0F94596B61414BD72225EB8' LIMIT 1;
+	IF V_LPRECIOS IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'LA LISTA DE PRECIOS NO EXISTE');
+	END IF;
+
+	SELECT ALMAC_TRUCK_ID INTO V_TRUCK FROM ALMAC_TRUCK WHERE TRIM (NAME) = V_TIPO_CAMION;
+	
+	IF V_TRUCK IS NULL THEN
+		V_TRUCK = GET_UUID();
+		V_TRUCKLINE = GET_UUID();
+		INSERT INTO ALMAC_TRUCK(ALMAC_TRUCK_ID,AD_CLIENT_ID,AD_ORG_ID,ISACTIVE,CREATED,CREATEDBY,UPDATED,UPDATEDBY,NAME,DESCRIPTION) VALUES(V_TRUCK,'0BD13E24E0F94596B61414BD72225EB8','0','Y',NOW(),'100',NOW(),'100',V_TIPO_CAMION,'Creado por Mobiik');
+		INSERT INTO ALMAC_TRUCKLINE(ALMAC_TRUCKLINE_ID,ALMAC_TRUCK_ID,AD_CLIENT_ID,AD_ORG_ID,ISACTIVE,CREATED,CREATEDBY,UPDATED,UPDATEDBY,NAME,DESCRIPTION) VALUES(V_TRUCKLINE,V_TRUCK,'0BD13E24E0F94596B61414BD72225EB8','0','Y',NOW(),'100',NOW(),'100',V_TONELAJE_CAMION,'Creado por Mobiik');
+
+	ELSE 
+		SELECT ALMAC_TRUCKLINE_ID INTO V_TRUCKLINE FROM ALMAC_TRUCKLINE WHERE ALMAC_TRUCK_ID = V_TRUCK AND TRIM(NAME) = TRIM(V_TONELAJE_CAMION);
+		IF V_TRUCKLINE IS NULL THEN
+			V_TRUCKLINE = GET_UUID();
+			INSERT INTO ALMAC_TRUCKLINE(ALMAC_TRUCKLINE_ID,ALMAC_TRUCK_ID,AD_CLIENT_ID,AD_ORG_ID,ISACTIVE,CREATED,CREATEDBY,UPDATED,UPDATEDBY,NAME,DESCRIPTION) VALUES(V_TRUCKLINE,V_TRUCK,'0BD13E24E0F94596B61414BD72225EB8','0','Y',NOW(),'100',NOW(),'100',V_TONELAJE_CAMION,'Creado por Mobiik');
+		END IF;
+	END IF;
+
+	SELECT C_DOCTYPE_ID,DOCNOSEQUENCE_ID,AD_CLIENT_ID INTO V_DOC, V_SEQ,V_CLIENT FROM C_DOCTYPE WHERE AD_TABLE_ID = '319' AND AD_ORG_ID IN (P_ORGANIZACION_ID,'0') AND DOCBASETYPE = 'MMS' AND ISSOTRX = 'Y' and ad_client_id = '0BD13E24E0F94596B61414BD72225EB8' ORDER BY AD_ORG_ID DESC LIMIT 1;
+	DBMS_OUTPUT.PUT_LINE( V_DOC||'   '||V_SEQ);
+	IF V_DOC IS NULL OR V_SEQ IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL TIPO DE DOCUMENTO O LA SECUENCIA DEL DOCUMENTO NO EXISTE.');
+	END IF;
+
+	--OBTENER LA SECUENCIA DEL SISTEMA
+	SELECT NAME,INCREMENTNO,AD_CLIENT_ID INTO V_SEQ,V_INC,V_CLIENT FROM AD_SEQUENCE WHERE AD_SEQUENCE_ID = V_SEQ;
+	SELECT AD_SEQUENCE_DOC(V_SEQ,V_CLIENT,'Y') INTO V_SEQ;
+
+	--SE INSERTA LA NUEVA CABECERA
+	V_IO_ID = GET_UUID();
+	INSERT INTO m_inout
+	(
+	m_inout_id,
+	ad_client_id,
+	ad_org_id,
+	isactive,
+	created,
+	createdby,
+	updated,
+	updatedby,
+	issotrx,
+	documentno,
+	docaction,
+	docstatus,
+	posted,
+	processing,
+	processed,
+	c_doctype_id,
+	description,
+	c_order_id,
+	dateordered,
+	isprinted,
+	movementtype,
+	movementdate,
+	dateacct,
+	c_bpartner_id,
+	c_bpartner_location_id,
+	m_warehouse_id,
+	poreference,
+	deliveryrule,
+	freightcostrule,
+	freightamt,
+	deliveryviarule,
+	m_shipper_id,
+	c_charge_id,
+	chargeamt,
+	priorityrule,
+	dateprinted,
+	c_invoice_id,
+	createfrom,
+	generateto,
+	ad_user_id,
+	salesrep_id,
+	nopackages,
+	pickdate,
+	shipdate,
+	trackingno,
+	ad_orgtrx_id,
+	c_project_id,
+	c_campaign_id,
+	c_activity_id,
+	user1_id,
+	user2_id,
+	updatelines,
+	islogistic,
+	generatelines,
+	calculate_freight,
+	delivery_location_id,
+	m_freightcategory_id,
+	freight_currency_id,
+	rm_receipt_pickedit,
+	rm_shipment_pickedit,
+	m_condition_goods_id,
+	em_almac_m2total,
+	em_almac_placastotal,
+	em_almac_numpedido,
+	em_almac_numfactura,
+	em_almac_lineaspedido,
+	em_almac_m_shipper_id,
+	em_almac_m_freight_id,
+	em_almac_actcosto,
+	em_almac_ventas_pick_id,
+	em_almac_matricula,
+	em_almac_num_entrega,
+	em_almac_nomb_chofer,
+	em_compra_crearlineas,
+	em_compra_contenedor_id,
+	em_compra_compterr_id,
+	em_compra_isnacional,
+	em_compra_contenedordf_id,
+	em_compra_copiarpick,
+	em_ventas_bp_id,
+	em_ventas_facturar,
+	em_ventas_pricelist_id,
+	em_ventas_pricelist,
+	em_almac_truckton_id,
+	em_almac_truckline_id
+	)
+	VALUES
+	(
+	V_IO_ID, --M_INOUT_ID
+	'0BD13E24E0F94596B61414BD72225EB8', -- AD_CLIENT_ID
+	P_ORGANIZACION_ID, -- AD_ORG_ID
+	'Y', --ISACTIVE
+	NOW(), --CREATED
+	'100', --CREATEDBY
+	NOW(), --UPDATED
+	'100', --UPDATEDBY
+	'Y', -- ISSOTRX
+	V_SEQ, --DOCUMENTNO
+	'CO', --DOCACTION
+	'DR', --DOCSTATUS
+	'N', --POSTED
+	'N', --PROCESSING
+	'N', --PROCESSED
+	V_DOC, --C_DOCTYPE_ID
+	'Salida Creada por Mobiik', --DESCRIPTION
+	NULL, --C_ORDER_ID
+	NOW(), --DATEORDERED
+	'N', --ISPRINTED
+	'C-', --MOVEMENTTYPE
+	NOW(), --MOVEMENTDATE
+	NOW(), --DATEACCT
+	P_CLIENTE_ID, --C_BPARTNER_ID
+	(SELECT C_BPARTNER_LOCATION_ID FROM C_BPARTNER_LOCATION WHERE C_BPARTNER_ID = P_CLIENTE_ID LIMIT 1), --C_BPARTNER_LOCATION_ID
+	P_WAREHOUSE_ID, --M_WAREHOUSE_ID
+	P_REFERENCIA_MOBIIK, --POREFERENCE
+	'A', --DELIVERYRULE
+	'I', --FREIGHTCOSTRULE
+	0,--FREIGHTAMT
+	'P',--DELIVERYVIARULE
+	NULL,--M_SHIPPER_ID
+	NULL,--C_CHARGE_ID
+	0,--CHARGEAMT
+	'5',--PRIORITYRULE
+	NULL,--DATEPRINTED
+	NULL, --C_INVOICE_ID
+	'N', --CREATEFROM
+	'N', --GENERATETO
+	'100', --AD_USER_ID
+	NULL, --SALESREP_ID
+	NULL, --NOPACKAGES
+	NULL, --PICKDATE
+	NULL, --SHIPDATE
+	NULL, --TRACKINGNO
+	NULL, --AD_ORGTRX_ID
+	NULL, --C_PROJECT_ID
+	NULL, --C_CAMPAIGN_ID
+	NULL, --C_ACTIVITY_ID
+	NULL, --USER1_ID
+	NULL, --USER2_ID
+	'N', --UPDATELINES
+	'Y', --ISLOGISTIC
+	'N', --GENERATELINES
+	NULL, --CALCULATE_FREIGHT	
+	NULL, --DELIVERY_LOCATION_ID
+	NULL, --M_FREIGHTCATEGORY_ID,
+	NULL, --FREIGHT_CURRENCY_ID
+	NULL, --RM_RECEIPT_PICKEDIT
+	NULL, --RM_SHIPMENT_PICKEDIT
+	NULL, --M_CONDITION_GOODS_ID
+	0, --EM_ALMAC_M2_TOTAL
+	0, --EM_ALMAC_PLACASTOTAL
+	P_PEDIDO, --EM_ALMAC_NUMPEDIDO
+	NULL, --EM_ALMAC_NUMFACTURA
+	NULL, --EM_ALMAC_LINEASPEDIDO
+	V_TRANSPORTISTA, --EM_ALMAC_M_SHIPPER_ID
+	NULL, --EM_ALMAC_M_FREIGHT_ID
+	NULL, --EM_ALMAC_ACTCOSTO
+	V_PEDIDO, --EM_ALMAC_VENTAS_PICK_ID
+	P_MATRICULA_TRANSPORTE, --EM_ALMAC_MATRICULA
+	P_NUMERO_ENTREGA, --EM_ALMAC_NUM_ENTREGA
+	P_NOMBRE_CHOFER, --EM_ALMAC_NOMB_CHOFER
+	NULL, --EM_COMPRA_CREARLINEAS
+	NULL, --EM_COMPRA_CONTENEDOR_ID
+	NULL, --EM_COMPRA_COMPTERR_ID
+	'N', --EM_COMPRA_ISNACIONAL
+	NULL, --EM_COMPRA_CONTENEDORDF_ID
+	NULL, --EM_COMPRA_COPIARPICK_ID
+	NULL, --EM_VENTAS_BP_ID
+	NULL, --EM_VENTAS_FACTURAR
+	V_LPRECIOS, --EM_VENTAS_PRICELIST_ID
+	V_LPRECIOS, --EM_VENTAS_PRICELIST
+	V_TRUCK,
+	V_TRUCKLINE
+	);
+	
+	
+	
+	RETURN V_IO_ID;
+EXCEPTION 
+WHEN OTHERS THEN
+  RAISE;
+END ALMAC_CRM_CREACABECERA
+]]></body>
+    </function>
+  </database>

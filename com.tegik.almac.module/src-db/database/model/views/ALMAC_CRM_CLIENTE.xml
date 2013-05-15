@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+  <database name="VIEW ALMAC_CRM_CLIENTE">
+    <view name="ALMAC_CRM_CLIENTE"><![CDATA[SELECT c.c_bpartner_id AS almac_crm_cliente_id, c.ad_client_id, c.ad_org_id, c.isactive, c.created, c.createdby, c.updated, c.updatedby, c.value AS identificador, c.name FROM c_bpartner c WHERE c.ad_client_id = '0BD13E24E0F94596B61414BD72225EB8' AND c.iscustomer = 'Y']]></view>
+  </database>

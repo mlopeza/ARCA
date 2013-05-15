@@ -1,0 +1,139 @@
+<?xml version="1.0"?>
+  <database name="FUNCTION ALMAC_CRM_CREALINEA">
+    <function name="ALMAC_CRM_CREALINEA" type="VARCHAR">
+      <parameter name="p_cabecera_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_m_locator_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_m_product_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_m_attributesetinstance_id" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_qty" type="NUMERIC" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_flete" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_timestamp" type="TIMESTAMP" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_anden" type="VARCHAR" mode="in">
+        <default/>
+      </parameter>
+      <parameter name="p_precio" type="NUMERIC" mode="in">
+        <default/>
+      </parameter>
+      <body><![CDATA[TYPE RECORD IS REF CURSOR;
+V_IO_ID VARCHAR2(32):=NULL;
+V_IOL_ID VARCHAR2(32):=NULL;
+V_SD_ID VARCHAR2(32):=NULL;
+V_CLIENT_ID VARCHAR2(32):=NULL;
+V_ORG_ID VARCHAR2(32):=NULL;
+BEGIN 
+	SELECT M_INOUT_ID,AD_CLIENT_ID,AD_ORG_ID INTO V_IO_ID,V_CLIENT_ID,V_ORG_ID FROM M_INOUT WHERE M_INOUT_ID = P_CABECERA_ID;
+	IF V_IO_ID IS NULL OR P_CABECERA_ID IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'LA CABECERA NO EXISTE.');
+	END IF;
+
+	SELECT M_STORAGE_DETAIL_ID INTO V_SD_ID FROM M_STORAGE_DETAIL WHERE M_LOCATOR_ID = P_M_LOCATOR_ID AND M_PRODUCT_ID = P_M_PRODUCT_ID AND M_ATTRIBUTESETINSTANCE_ID = P_M_ATTRIBUTESETINSTANCE_ID;
+	IF V_SD_ID IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL PRODUCTO NO EXISTE CON ESE ATRIBUTO EN EL INVENTARIO.');
+	END IF;
+
+	IF P_QTY IS NULL OR P_QTY <= 0 THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL PRODUCTO NO PUEDE SER MENOR O IGUAL A CERO.');
+	END IF;
+
+	IF P_PRECIO IS NULL OR P_PRECIO <= 0 THEN
+		RAISE_APPLICATION_ERROR(-20000, 'EL PRECIO NO PUEDE SER MENOR O IGUAL A CERO.');
+	END IF;
+
+	UPDATE M_ATTRIBUTESETINSTANCE SET EM_ALMAC_ANDEN = P_ANDEN, EM_ALMAC_FLETE = P_FLETE, EM_ALMAC_FLETE_FECHA = P_TIMESTAMP WHERE M_ATTRIBUTESETINSTANCE_ID = P_M_ATTRIBUTESETINSTANCE_ID;
+
+	INSERT INTO m_inoutline
+		(
+		m_inoutline_id
+		, ad_client_id
+		, ad_org_id
+		, isactive
+		, created
+		, createdby
+		, updated
+		, updatedby
+		, line
+		, description
+		, m_inout_id
+		, c_orderline_id
+		, m_locator_id
+		, m_product_id
+		, c_uom_id
+		, movementqty
+		, isinvoiced
+		, m_attributesetinstance_id
+		, isdescription
+		, quantityorder
+		, m_product_uom_id
+		, m_condition_goods_id
+		, canceled_inoutline_id
+		, em_almac_qtyasignada
+		, em_almac_movementqty
+		, em_almac_preciom2
+		, em_almac_atado_id
+		, em_compra_contenedor_id
+		, em_compra_il_id
+		, em_compra_asignar
+		, em_ventas_ismascara
+		, em_ventas_mascara
+		, em_compra_cambiahueco
+		)
+		VALUES
+		(
+		GET_UUID()
+		, '0BD13E24E0F94596B61414BD72225EB8'
+		, V_ORG_ID
+		, 'Y'
+		, NOW()
+		, '0'
+		, NOW()
+		, '0'
+		, (SELECT COALESCE(MAX(LINE),0)+10 FROM M_INOUTLINE WHERE M_INOUT_ID = V_IO_ID)
+		, 'Creado por Mobiik'
+		, V_IO_ID
+		, NULL
+		, P_M_LOCATOR_ID
+		, P_M_PRODUCT_ID
+		, '100'
+		, P_QTY
+		, 'N'
+		, P_M_ATTRIBUTESETINSTANCE_ID
+		, 'N'
+		, NULL
+		, NULL
+		, NULL
+		, NULL
+		, P_QTY
+		, P_QTY
+		, P_PRECIO
+		, (SELECT EM_ALMAC_ATADO_ID FROM M_ATTRIBUTESETINSTANCE WHERE M_ATTRIBUTESETINSTANCE_ID = P_M_ATTRIBUTESETINSTANCE_ID)
+		, NULL
+		, NULL
+		, 'N'
+		, 'N'
+		, NULL
+		, NULL
+		);
+
+
+	RETURN 'OK';
+EXCEPTION 
+WHEN OTHERS THEN
+  RAISE;
+END ALMAC_CRM_CREALINEA
+]]></body>
+    </function>
+  </database>
