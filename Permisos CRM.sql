@@ -3,6 +3,7 @@ GRANT SELECT ON TABLE almac_piezasconprecio TO crm;
 GRANT SELECT ON TABLE almac_crm_nom_comercial TO crm;
 GRANT SELECT ON TABLE almac_crm_prodnomcom TO crm;
 GRANT SELECT ON TABLE almac_crm_cliente TO crm;
+GRANT SELECT ON TABLE almac_crm_inventario TO crm;
 GRANT SELECT ON TABLE c_bpartner TO crm;
 GRANT SELECT ON TABLE ad_org TO crm;
 GRANT SELECT ON TABLE ad_user TO crm;
