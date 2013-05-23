@@ -17,6 +17,10 @@
         <default/>
         <onCreateDefault/>
       </column>
+      <column name="EM_ALMAC_ISMOBIIK" primaryKey="false" required="true" type="CHAR" size="1" autoIncrement="false">
+        <default><![CDATA[Y]]></default>
+        <onCreateDefault/>
+      </column>
       <check name="EM_ALMAC_M_WAREHOUSE_CANCUN"><![CDATA[EM_ALMAC_ESCANCUN IN ('Y', 'N')]]></check>
       <check name="EM_ALMAC_M_WAREHOUSE_DF"><![CDATA[EM_ALMAC_ESDF IN ('Y', 'N')]]></check>
       <check name="EM_ALMAC_M_WAREHOUSE_GDL"><![CDATA[EM_ALMAC_ESGUADALAJARA IN ('Y', 'N')]]></check>

@@ -53,10 +53,7 @@ public class DesapartadoPiezas extends DalBaseProcess {
 
 				//Busca las piezas por organizacion que cumplen con los criterios
 				OBCriteria<AttributeSetInstance> asiList = OBDal.getInstance().createCriteria(AttributeSetInstance.class);
-				asiList.add(
-						Expression.or(
-							Expression.eq(AttributeSetInstance.PROPERTY_ALMACRESERVAPEDIDO,true),
-							Expression.eq(AttributeSetInstance.PROPERTY_ALMACRESERVACOTIZACION,true)));
+				asiList.add(Expression.eq(AttributeSetInstance.PROPERTY_ALMACRESERVACOTIZACION,true));
 				asiList.add(Expression.eq(AttributeSetInstance.PROPERTY_ORGANIZATION,org));
 				asiList.add(Expression.lt(AttributeSetInstance.PROPERTY_UPDATED,calendar.getTime()));
 				asiL = asiList.list();

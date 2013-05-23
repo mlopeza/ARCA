@@ -307,7 +307,7 @@
 		END IF;
 
 		SELECT COUNT(*) INTO v_cuenta FROM (select m_inoutline_id, em_almac_preciom2 FROM M_INOUTLINE WHERE M_INOUT_ID = Cur_InOut.M_InOut_ID AND em_almac_preciom2 IS NULL) iol
-		LEFT JOIN almac_distrib ad ON ad.m_inoutline_id = iol.m_inoutline_id AND (ad.costo_pieza is null OR iol.em_almac_preciom2 is null OR iol.em_almac_preciom2 = 0 OR ad.costo_pieza = 0);
+		LEFT JOIN almac_distrib ad ON ad.m_inoutline_id = iol.m_inoutline_id AND (ad.costo_pieza is null OR iol.em_almac_preciom2 is null OR iol.em_almac_preciom2 < 0 OR ad.costo_pieza < 0);
 		
 		IF (v_cuenta > 0 ) AND  Cur_InOut.issotrx = 'Y' THEN
 			RAISE_APPLICATION_ERROR(-20000, 'No se puede completar la salida si alguna pieza no tiene precio o este es igual a 0.') ;
