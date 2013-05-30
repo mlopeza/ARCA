@@ -35,7 +35,9 @@ v_gdl bpchar;
 v_cun bpchar;
 v_city VARCHAR2(32);
 BEGIN 
-
+	IF((SELECT em_almac_startgdl FROM M_PRODUCT WHERE M_PRODUCT_ID = p_product_id LIMIT 1) = 'Y') THEN
+		RETURN (SELECT  COALESCE(em_almac_fob_usd,0) FROM M_PRODUCT WHERE M_PRODUCT_ID = p_product_id LIMIT 1);
+	END IF;
 	IF (p_ruta is not null) THEN
 		v_city = TRIM(UPPER(p_ruta));
 	ELSIF(p_org_id IS NOT NULL) THEN

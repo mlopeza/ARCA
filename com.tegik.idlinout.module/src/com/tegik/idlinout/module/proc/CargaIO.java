@@ -358,7 +358,9 @@ public class CargaIO extends IdlService {
 				arancel = new BigDecimal(((String)values[27]).replaceAll("[^0-9]",""));
 			}
 			espesor = (values[21]==null || (((String)values[21]).replaceAll("[^\\d|^\\.]","").trim()).equals(""))? null : new BigDecimal((String)values[21]);
+			//log.info("Values[22]:"+values[22]);
 			costoFOB = (values[22]==null || (((String)values[22]).replaceAll("[^\\d|^\\.]","").trim()).equals(""))? null : new BigDecimal((String)values[22]);
+			//log.info("Values[22]:"+values[22]);
 			String embarque;
 			if(values[28] == null || (((String)values[28]).trim()).equals("")){
 				embarque = null;
@@ -386,7 +388,7 @@ public class CargaIO extends IdlService {
 					(String)values[36]
 					);
 
-
+			//log.info("Despues de ASI TEMP");
 			//Busca el producto
 			//Se tomaran el mismo largo, ancho y espesor del archivo dado
 			//largo = p.getDmprodHeight();
@@ -396,10 +398,12 @@ public class CargaIO extends IdlService {
 			//If it needs to be changed we nee dto choose a new locator or make explicit the place
 			//Where we want to put the slab or tile
 			Locator hueco = findHueco("OK");
+			//log.info("Despues de findHueco");
 			//Crea la linea y se la asigna
 			//Se busca la linea que pertenece a un producto para una cabecera en especifico.
 			//Se utiliza la cabecera y el producto para encontrar la linea que se desea
 			ShipmentInOutLine InOutLine = findInOutLine(InOut,p,InOut.getCompraContenedor(),asiTemp,hueco);
+			//log.info("Despues de findInoutLine");
 			largo = (largo == null)? null: largo;
                         ancho = (ancho == null)? null: ancho;
                         espesor = (espesor == null)? null: espesor;
@@ -412,6 +416,7 @@ public class CargaIO extends IdlService {
 
 			}
 			log.info("Linea:"+getRecordsProcessed());
+			//log.info("Antes de createLine");
 			return createLine(
 					InOutLine,					//Linea que se usara como base
 					asiTemp,					//Atributos
@@ -458,7 +463,7 @@ public class CargaIO extends IdlService {
 		ad.setCreatedBy(OBContext.getOBContext().getUser());
 		ad.setUpdated(dTemp);
 		ad.setUpdatedBy(OBContext.getOBContext().getUser());
-		log.info("Cantidad  "+cantidad);
+		//log.info("Cantidad  "+cantidad);
 		ad.setMovementQuantity(cantidad);
 		ad.setAttributeSetValue(ASID);
 		ad.setGoodsShipmentLine(linea);
@@ -483,10 +488,11 @@ public class CargaIO extends IdlService {
 	        BigDecimal costoReal = BigDecimal.ZERO;
 	        if(costo == null || costo.trim().equals("")){
 	            costoReal = p.getAlmacFobUsd();
-	            log.info("Costo del Producto="+costoReal);
+	            //log.info("Costo del Producto="+costoReal);
 	        }else{
-	            log.info("Costo del Archivo = "+costo);
-	            costoReal = new BigDecimal(costo);
+	            //log.info("Costo del Archivo = >"+costo+"<");
+	            costoReal = new BigDecimal(costo.trim());
+	            //log.info("Costo del Archivo = "+costo);
 	        }
 	        
 	        //Verificas que exist ael atributo en la base de datos
@@ -498,38 +504,46 @@ public class CargaIO extends IdlService {
 		wC.append(" AND  round(almacAlto,4)=round('"+alto.toString()+"',4)");
 		wC.append(" AND  round(almacAncho,4)=round('"+ancho.toString()+"',4)");
 		wC.append(" AND client = '"+OBContext.getOBContext().getCurrentClient().getId()+"' ");
-
+		//log.info("Costo del Archivo3 = "+costo);
 		//Encontro el Guacal o Slab en la Base de Datos
 		OBQuery<AttributeSetInstance> aQ = obdal.createQuery(AttributeSetInstance.class,wC.toString());
 		List<AttributeSetInstance> asiList = aQ.list();
 		if(!asiList.isEmpty()){
+		  //log.info("Costo del Archivo5 = "+costo);
 			return asiList.get(0);
 		}
-
+		//log.info("Costo del Archivo4 = "+costo);
 		//Si no lo encontro, entonces creas el atributo
 		AttributeSetInstance asi = OBProvider.getInstance().get(AttributeSetInstance.class);
 		//Asignas los atributos
 		asi.setAlmacCostoRealusd(costoReal);
 		asi.setClient(OBContext.getOBContext().getCurrentClient());
+		//log.info("Costo del Archivo6 = "+costo);
 		asi.setOrganization(org);
 		asi.setActive(true);
+		//log.info("Costo del Archivo7 = "+costo);
 		asi.setCreationDate(dTemp);
 		asi.setCreatedBy(OBContext.getOBContext().getUser());
 		asi.setUpdated(dTemp);
 		asi.setUpdatedBy(OBContext.getOBContext().getUser());
+		//log.info("Costo del Archivo8 = "+costo);
 		asi.setAttributeSet(attr);
 		if(description.toUpperCase().charAt(0) != 'G' && attr.equals(tile) ){
 		  description = "G"+(description.trim());
 		}else if(description.toUpperCase().charAt(0) != 'S' && attr.equals(slab)){
 		  description = "S"+(description.trim());
 		}
+		//log.info("Costo del Archivo9 = "+costo);
 		asi.setDescription(description);
 		asi.setAlmacAlto(alto);
 		asi.setAlmacAncho(ancho);
+		//log.info("Costo del Archivo10 = "+costo);
 		if(calidad != null && !(calidad.trim()).equals(""))
 			asi.setAlmacCalidadP(findCalidadPieza(calidad));
+		//log.info("Antes de Guardar ASI");
 		obdal.save(asi);
 		obdal.flush();
+		//log.info("Despues de Guardar ASI");
 		return asi;
 	}
 
@@ -736,10 +750,11 @@ public class CargaIO extends IdlService {
 			header.setDescription("Carga Automática de Inventario. Pedimento: <"+p+">");
 			header.setPrint(false);
 			//Inserta el elemento en la tabla de hash
+			//log.info("Antes:"+header.getDocumentNo());
 			obdal.save(header);
 			obdal.flush();
 			headerHash.put(c,header);
-
+			//log.info("Despues:"+header.getDocumentNo());
 			//Regresa el objeto
 			return header;
 		}
@@ -817,9 +832,8 @@ public class CargaIO extends IdlService {
 	private DocumentType findDocType(){
 		StringBuilder wC = new StringBuilder(); 
 		wC.append(" as dt");                    
-		wC.append(" where upper(name) like  'RECEPCI%N DE MERCANC%A DE PROVEEDOR EXTRANJERO%' ");
-		wC.append(" AND client = '"+OBContext.getOBContext().getCurrentClient().getId()+"' ");
-		wC.append(" order by name");
+		wC.append(" where "+DocumentType.PROPERTY_ID+" = '7AFD2997E7B24222AC7B0B7F7A358EC2' ");
+		//log.info(wC.toString());
 		OBQuery<DocumentType> aQ = obdal.createQuery(DocumentType.class,wC.toString());
 		List<DocumentType> docList = aQ.list();
 		if(docList.isEmpty()){
